@@ -6,69 +6,43 @@ The name of the repo is based on the character Lynchman from one of the best ani
 # JSON File Format for Beat Saber Maps
 Maps are stored in .json files with a pretty self-explanatory format for the most part.
 
-
-## tileIndex (columns), tileLayer (rows)
+## Notes
+### tileIndex (columns), tileLayer (rows)
 Denotes the position of the tile in a fixed 3x4 grid.
 
 ```
-     --- --- --- ---
- 2  |   |   |   |   |  l
-    |   |   |   |   |   a
-     --- --- --- ---     y
- 1  |   |   |   |   |     e
-    |   |   |   |   |      r
-     --- --- --- ---
- 0  |   |   |   |   |
-    |   |   |   |   |
-     --- --- --- ---
-      0   1   2   3   index
+           --- --- --- ---
+l       2 |   |   |   |   |
+ a        |   |   |   |   |
+  y        --- --- --- ---
+   e    1 |   |   |   |   |
+    r     |   |   |   |   |
+           --- --- --- ---
+        0 |   |   |   |   |
+          |   |   |   |   |
+           --- --- --- ---
+            0   1   2   3
+                index
 
 ```
 tileLayer denotes the row as described in the diagram above.
 
 tileIndex denotes the column as described in the diagram above.
 
-## type
+### type
 Denotes the color/side of the tile (left or right)
 
 When type is 0, the tile must be hit with the left saber.
 When type is 1, the tile must be hit with the right saber.
 
-## cutDirection
-Denotes the cardinal direction, or lack thereof, through which the tile must be cut.
-
-N  : 1
-NE : 6
-E  : 2
-SE : 4
-S  : 0
-SW : 5
-W  : 3
-NW : 7
-
-
-
-
+### cutDirection
+Denotes whether the tile (which are boxes geometrically) is placed straight or on a diagonal as well as the cardinal direction, or lack thereof, through which the tile must be cut.
 
 ```
-       1
-     -----
-    /     \
- 7 /       \ 6
-  /         \
-  |         |
-3 |    8    | 2
-  |         |
-  \         /
- 5 \       / 4
-    \     /
-     -----
-       0
-
      1
    -----
   |     |
-3 |     | 2
+3 |  8  | 2
   |     |
    -----
      0
@@ -82,5 +56,11 @@ NW : 7
     \ /
      -
 ```
+
+NB: A value of 8 signifies that the block will be placed straight and can be cut from any direction.
+
+## Events
+???
+
 
 
