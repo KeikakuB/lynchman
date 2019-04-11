@@ -7,8 +7,8 @@ The name of the repo is based on the character Lynchman from one of the best ani
 Maps are stored in .json files with a pretty self-explanatory format for the most part.
 
 ## Notes
-### tileIndex (columns), tileLayer (rows)
-Denotes the position of the tile in a fixed 3x4 grid.
+### lineIndex (columns), lineLayer (rows)
+Denotes the position of the block in a fixed 3x4 grid.
 
 ```
            --- --- --- ---
@@ -25,18 +25,20 @@ l       2 |   |   |   |   |
                 index
 
 ```
-tileLayer denotes the row as described in the diagram above.
+lineLayer denotes the row as described in the diagram above.
 
-tileIndex denotes the column as described in the diagram above.
+lineIndex denotes the column as described in the diagram above.
 
 ### type
-Denotes the color/side of the tile (left or right)
+Denotes the type of block.
 
-When type is 0, the tile must be hit with the left saber.
-When type is 1, the tile must be hit with the right saber.
+When type is 0, the block must be hit with the left saber.
+When type is 1, the block must be hit with the right saber.
+When type is 2?
+When type is 3, the block is a bomb block.
 
 ### cutDirection
-Denotes whether the tile (which are boxes geometrically) is placed straight or on a diagonal as well as the cardinal direction, or lack thereof, through which the tile must be cut.
+Denotes whether the block (which are boxes geometrically) is placed straight or on a diagonal as well as the cardinal direction, or lack thereof, through which the block must be cut.
 
 ```
      1
