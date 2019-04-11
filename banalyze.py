@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import numpy as np
+import pandas
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -143,6 +144,22 @@ def annotate_heatmap(im, data=None, valfmt="{x:.2f}",
 
     return texts
 
+def build_histogram(notes, n_bins=60):
+    times = [n["_time"] for n in notes]
+
+    fig, ax = plt.subplots()
+
+    # the histogram of the data
+    n, bins, patches = ax.hist(times, n_bins)
+
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel('Number of Note')
+    ax.set_title(r'Histogram of Note over time')
+
+    # Tweak spacing to prevent clipping of ylabel
+    fig.tight_layout()
+    plt.show()
+
 def main():
     if len(sys.argv) < 2:
         print("python3 banalyze.py JSON_FILEPATH")
@@ -150,17 +167,12 @@ def main():
     input_filename = sys.argv[1]
     with open(input_filename) as f:
         data = json.load(f)
-    # {"_version":"1.5.0","_beatsPerMinute":100,"_beatsPerBar":16,"_noteJumpSpeed":10,"_shuffle":0,"_shufflePeriod":0.5,"_events":[{"_time":6.7333335876464844,"_type":13
     header_data_names = ["_version", "_beatsPerMinute", "_beatsPerBar", "_noteJumpSpeed", "_shuffle", "_shufflePeriod"]
     print("HEADERS")
     for n in header_data_names:
         print("{}: {}".format(n[1:], data[n]))
 
-    #events = data["_events"]
     notes = data["_notes"]
-
-    for n in notes:
-        print(n)
 
     left_note_count = len([n for n in notes if n["_type"] == 0])
     right_note_count = len([n for n in notes if n["_type"] == 1])
@@ -175,6 +187,39 @@ def main():
 
     print("notes percentage (left,right): ({}, {})".format(left_note_percentage, right_note_percentage))
 
+    cut_direction_count = collections.Counter()
+
+    for n in notes:
+        cut_direction_count[n["_cutDirection"]] += 1
+
+    total_cuts = sum(cut_direction_count.values())
+    cut_percentages = []
+    for k in sorted(cut_direction_count.keys()):
+        cut_count = cut_direction_count[k]
+        cut_percentage = cut_count / total_cuts
+        cut_percentages.append(cut_percentage)
+        print("{}: {} ({:.2f})".format(k, cut_count, cut_percentage))
+
+    print(
+"""
+       {:.2f}
+      ------
+     |      |
+{:.2f} | {:.2f} | {:.2f}
+     |      |
+      ------
+       {:.2f}
+
+       -
+      / \\
+{:.2f} /   \ {:.2f}
+    /     \\
+    \     /
+{:.2f} \   / {:.2f}
+      \ /
+       -
+""".format(cut_percentages[1],cut_percentages[3],cut_percentages[8],cut_percentages[2],cut_percentages[1],cut_percentages[7],cut_percentages[6],cut_percentages[5],cut_percentages[4]))
+
     with PdfPages('out/out.pdf') as pdf:
         normal_notes = [n for n in notes if n["_type"] == 0 or n["_type"] == 1]
         build_note_heatmap(normal_notes)
@@ -182,6 +227,9 @@ def main():
         plt.close()
         bomb_notes = [n for n in notes if n["_type"] == 3]
         build_note_heatmap(bomb_notes, "Reds")
+        pdf.savefig()
+        plt.close()
+        build_histogram(notes)
         pdf.savefig()
         plt.close()
 
