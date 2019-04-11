@@ -9,6 +9,93 @@ import json
 import sys
 import collections
 
+from enum import Enum
+class NoteType(Enum):
+    NONE = 1
+    ALL = 2
+    NORMAL = 3
+    LEFT = 4
+    RIGHT = 5
+    BOMB = 6
+
+class Song:
+    def __init__(self, json_filepath):
+        with open(json_filepath) as f:
+            self.data = json.load(f)
+        self.events = self.data["_events"]
+        self.notes = self.data["_notes"]
+
+    def get_notes(self, note_type=NoteType.ALL):
+        # note_type: all, normal, left, right, bombs
+        if note_type is NoteType.ALL:
+            return self.notes.copy()
+        ls = []
+        for n in self.notes:
+            type_value = n["_type"]
+            is_included = False
+            if type_value == 0 or type_value == 1:
+                if note_type is NoteType.NORMAL:
+                    is_included = True
+                elif note_type is NoteType.LEFT and type_value == 0:
+                    is_included = True
+                elif note_type is NoteType.RIGHT and type_value == 1:
+                    is_included = True
+            if note_type is NoteType.BOMB and type_value == 3:
+                is_included = True
+            if is_included:
+                ls.append(n)
+        return ls
+
+    def log_basic_data(self):
+        header_data_names = ["_version", "_beatsPerMinute", "_beatsPerBar", "_noteJumpSpeed", "_shuffle", "_shufflePeriod"]
+        for n in header_data_names:
+            print("{}: {}".format(n[1:], self.data[n]))
+
+        left_note_count = len(self.get_notes(NoteType.LEFT))
+        right_note_count = len(self.get_notes(NoteType.RIGHT))
+
+        total_normal_notes = left_note_count + right_note_count
+        print("total normal notes: {}".format(total_normal_notes))
+
+        print("notes count (left,right): ({}, {})".format(left_note_count, right_note_count))
+
+        left_note_percentage = left_note_count / total_normal_notes
+        right_note_percentage = right_note_count / total_normal_notes
+
+        print("notes percentage (left,right): ({:.2f}, {:.2f})".format(left_note_percentage, right_note_percentage))
+
+        cut_direction_count = collections.Counter()
+
+        for n in self.notes:
+            cut_direction_count[n["_cutDirection"]] += 1
+
+        total_cuts = sum(cut_direction_count.values())
+        cut_percentages = []
+        for k in sorted(cut_direction_count.keys()):
+            cut_count = cut_direction_count[k]
+            cut_percentage = cut_count / total_cuts
+            cut_percentages.append(cut_percentage)
+
+        print(
+"""
+       {:.2f}
+      ------
+     |      |
+{:.2f} | {:.2f} | {:.2f}
+     |      |
+      ------
+       {:.2f}
+
+       -
+      / \\
+{:.2f} /   \ {:.2f}
+    /     \\
+    \     /
+{:.2f} \   / {:.2f}
+      \ /
+       -
+""".format(cut_percentages[1],cut_percentages[3],cut_percentages[8],cut_percentages[2],cut_percentages[1],cut_percentages[7],cut_percentages[6],cut_percentages[5],cut_percentages[4]))
+
 def build_note_heatmap(notes, cmap="YlGn"):
     notes_count = collections.Counter()
 
@@ -90,7 +177,6 @@ def heatmap(data, row_labels, col_labels, ax=None,
 
     return im, cbar
 
-
 def annotate_heatmap(im, data=None, valfmt="{x:.2f}",
                      textcolors=["black", "white"],
                      threshold=None, **textkw):
@@ -165,71 +251,18 @@ def main():
         print("python3 banalyze.py JSON_FILEPATH")
         sys.exit(1)
     input_filename = sys.argv[1]
-    with open(input_filename) as f:
-        data = json.load(f)
-    header_data_names = ["_version", "_beatsPerMinute", "_beatsPerBar", "_noteJumpSpeed", "_shuffle", "_shufflePeriod"]
-    print("HEADERS")
-    for n in header_data_names:
-        print("{}: {}".format(n[1:], data[n]))
+    song = Song(input_filename)
 
-    notes = data["_notes"]
-
-    left_note_count = len([n for n in notes if n["_type"] == 0])
-    right_note_count = len([n for n in notes if n["_type"] == 1])
-
-    total_normal_notes = left_note_count + right_note_count
-    print("total normal notes: {}".format(total_normal_notes))
-
-    print("notes count (left,right): ({}, {})".format(left_note_count, right_note_count))
-
-    left_note_percentage = len([n for n in notes if n["_type"] == 0]) / total_normal_notes
-    right_note_percentage = len([n for n in notes if n["_type"] == 1]) / total_normal_notes
-
-    print("notes percentage (left,right): ({}, {})".format(left_note_percentage, right_note_percentage))
-
-    cut_direction_count = collections.Counter()
-
-    for n in notes:
-        cut_direction_count[n["_cutDirection"]] += 1
-
-    total_cuts = sum(cut_direction_count.values())
-    cut_percentages = []
-    for k in sorted(cut_direction_count.keys()):
-        cut_count = cut_direction_count[k]
-        cut_percentage = cut_count / total_cuts
-        cut_percentages.append(cut_percentage)
-        print("{}: {} ({:.2f})".format(k, cut_count, cut_percentage))
-
-    print(
-"""
-       {:.2f}
-      ------
-     |      |
-{:.2f} | {:.2f} | {:.2f}
-     |      |
-      ------
-       {:.2f}
-
-       -
-      / \\
-{:.2f} /   \ {:.2f}
-    /     \\
-    \     /
-{:.2f} \   / {:.2f}
-      \ /
-       -
-""".format(cut_percentages[1],cut_percentages[3],cut_percentages[8],cut_percentages[2],cut_percentages[1],cut_percentages[7],cut_percentages[6],cut_percentages[5],cut_percentages[4]))
+    song.log_basic_data()
 
     with PdfPages('out/out.pdf') as pdf:
-        normal_notes = [n for n in notes if n["_type"] == 0 or n["_type"] == 1]
-        build_note_heatmap(normal_notes)
+        build_note_heatmap(song.get_notes(NoteType.NORMAL))
         pdf.savefig()
         plt.close()
-        bomb_notes = [n for n in notes if n["_type"] == 3]
-        build_note_heatmap(bomb_notes, "Reds")
+        build_note_heatmap(song.get_notes(NoteType.BOMB), "Reds")
         pdf.savefig()
         plt.close()
-        build_histogram(notes)
+        build_histogram(song.get_notes())
         pdf.savefig()
         plt.close()
 
