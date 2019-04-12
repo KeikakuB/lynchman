@@ -139,6 +139,18 @@ def get_basic_data_as_text(song):
     right_note_fraction = right_note_count / total_normal_notes
 
     lines.append("notes leaning (left+, right-): {:.2f}".format(left_note_fraction - right_note_fraction))
+
+    all_normal_notes = song.get_notes(NoteType.NORMAL)
+    diffs = []
+    # compute the average time between notes
+    for i in range(0, len(all_normal_notes) - 1):
+        t1 = all_normal_notes[i]["_time"]
+        t2 = all_normal_notes[i + 1]["_time"]
+        diffs.append(abs(t2 - t1))
+
+    average_difference_in_seconds = sum(diffs) / len(diffs)
+    lines.append("average difference in seconds between notes: {:.2f}".format(average_difference_in_seconds))
+
     return '\n'.join(lines)
 
 def build_note_heatmap(notes, cmap="YlGn"):
@@ -291,10 +303,15 @@ def build_histogram(notes, n_bins=60):
 
 def build_cut_directions_drawing(notes):
     fig, ax = plt.subplots()
+    plt.text(0.05,0.9, "Percentage of cut directions", transform=fig.transFigure, size=14)
+    plt.text(0.05,0.05, "eg. N means you have to cut the block from the top", transform=fig.transFigure, size=6)
 
-    s = 0.25
+    s = 0.3
 
     shifts = [(0, -s), (0, s), (s, 0), (-s, 0), (s, -s), (-s, -s), (s, s), (-s, s), (0, 0)]
+    center_point_coord = 0.5
+    direction_scale = 0.7
+    direction_names = ["S", "N", "E", "W", "SE", "SW", "NE", "NW"]
 
     cut_direction_count = collections.Counter()
 
@@ -313,9 +330,11 @@ def build_cut_directions_drawing(notes):
 
     for i in range(0, len(shifts)):
         shift = shifts[i]
-        x = 0.5 + shift[0]
-        y = 0.5 + shift[1]
+        x = center_point_coord + shift[0]
+        y = center_point_coord + shift[1]
         plt.text(x, y, "{:.2f}".format(cut_percentages[i]), transform=fig.transFigure, ha="center", family='sans-serif', size=14)
+        if i < len(shifts) - 1:
+            plt.text(center_point_coord + shift[0] * direction_scale, center_point_coord + shift[1] * direction_scale, direction_names[i], transform=fig.transFigure, ha="center", family='sans-serif', size=14)
 
     plt.axis('off')
 
@@ -358,6 +377,7 @@ def main():
     parser.add_argument('--difficulty', type=str, choices=SONG_DIFFICULTIES, default=None, help='Difficulty of songs to analyze, if not set then analyze all difficulties')
     parser.add_argument('--filter', default=None, help='text to use to filter songs')
     parser.add_argument('--operation', choices=['cumulative', 'single'], default='cumulative', help='Print more data')
+    parser.add_argument('--output_filename', type=str, default="cumul", help='filename to output to when performing a cumulative operation')
 
     args = parser.parse_args()
 
@@ -386,12 +406,14 @@ def main():
                             else:
                                 is_song = name in SONG_DIFFICULTIES
                         if is_song:
-                            print("{} _ {} _ {}".format(song_ident, song_name, name))
                             songs.append(Song(song_ident, song_name, name, filepath))
 
     if args.operation == 'cumulative':
         song_collection = SongCollection(songs)
-        save_pdf("out/cumul.pdf", song_collection)
+        save_pdf("out/{}.pdf".format(args.output_filename), song_collection)
+        song_descriptors = ["{} _ {} _ {}".format(s.ident, s.name, s.difficulty) for s in songs]
+        with open("out/{}.txt".format(args.output_filename), 'wt', encoding='utf-8') as f:
+            f.write('\n'.join(song_descriptors))
     elif args.operation == 'single':
         for s in songs:
             save_pdf("out/{}_{}_{}.pdf".format(s.ident, s.name, s.difficulty), s)
