@@ -11,7 +11,11 @@ import json
 import sys
 import collections
 
+SONG_DIFFICULTIES=["Easy", "Normal", "Hard", "Expert", "ExpertPlus"]
+SONG_EXTENSION=".json"
+
 from enum import Enum
+
 class NoteType(Enum):
     NONE = 1
     ALL = 2
@@ -20,10 +24,39 @@ class NoteType(Enum):
     RIGHT = 5
     BOMB = 6
 
+class SongCollection:
+    def __init__(self, songs):
+        self._songs = songs
+        self._number_of_songs = len(self._songs)
+
+    def get_number_of_songs(self):
+        return self._number_of_songs
+
+    def get_notes(self, note_type=NoteType.ALL):
+        notes_by_songs = [s.get_notes(note_type) for s in self._songs]
+        notes = [s for song in notes_by_songs for s in song]
+        return notes
+
+    def get_beats_per_minute(self):
+        return sum([s.get_beats_per_minute() for s in self._songs]) / self.get_number_of_songs()
+
+    def get_beats_per_bar(self):
+        return sum([s.get_beats_per_bar() for s in self._songs]) / self.get_number_of_songs()
+
+    def get_note_jump_speed(self):
+        return sum([s.get_note_jump_speed() for s in self._songs]) / self.get_number_of_songs()
+
+    def get_shuffle(self):
+        return sum([s.get_shuffle() for s in self._songs]) / self.get_number_of_songs()
+
+    def get_shuffle_period(self):
+        return sum([s.get_shuffle_period() for s in self._songs]) / self.get_number_of_songs()
+
 class Song:
-    def __init__(self, ident, name, json_filepath):
+    def __init__(self, ident, name, difficulty, json_filepath):
         self.ident = ident
         self.name = name
+        self.difficulty = difficulty
         with open(json_filepath) as f:
             self._data = json.load(f)
         self._events = self._data["_events"]
@@ -66,26 +99,47 @@ class Song:
                 ls.append(n)
         return ls
 
-    def log_basic_data(self):
-        lines = []
-        header_data_names = ["_version", "_beatsPerMinute", "_beatsPerBar", "_noteJumpSpeed", "_shuffle", "_shufflePeriod"]
-        for n in header_data_names:
-            lines.append("{}: {}".format(n[1:], self._data[n]))
+    def get_version(self):
+        return self._data["_version"]
 
-        left_note_count = len(self.get_notes(NoteType.LEFT))
-        right_note_count = len(self.get_notes(NoteType.RIGHT))
+    def get_beats_per_minute(self):
+        return self._data["_beatsPerMinute"]
 
-        total_normal_notes = left_note_count + right_note_count
-        lines.append("total normal notes: {}".format(total_normal_notes))
-        lines.append("total bombs: {}".format(len(self.get_notes(NoteType.BOMB))))
+    def get_beats_per_bar(self):
+        return self._data["_beatsPerBar"]
 
-        lines.append("notes count (left,right): ({}, {})".format(left_note_count, right_note_count))
+    def get_note_jump_speed(self):
+        return self._data["_noteJumpSpeed"]
 
-        left_note_fraction = left_note_count / total_normal_notes
-        right_note_fraction = right_note_count / total_normal_notes
+    def get_shuffle(self):
+        return self._data["_shuffle"]
 
-        lines.append("notes leaning (left+, right-): {:.2f}".format(left_note_fraction - right_note_fraction))
-        return '\n'.join(lines)
+    def get_shuffle_period(self):
+        return self._data["_shufflePeriod"]
+
+def get_basic_data_as_text(song):
+    lines = []
+
+    lines.append("beatsPerMinute: {:.2f}".format(song.get_beats_per_minute()))
+    lines.append("beatsPerBar: {:.2f}".format(song.get_beats_per_bar()))
+    lines.append("noteJumpSpeed: {:.2f}".format(song.get_note_jump_speed()))
+    lines.append("shuffle: {:.2f}".format(song.get_shuffle()))
+    lines.append("shufflePeriod: {:.2f}".format(song.get_shuffle_period()))
+
+    left_note_count = len(song.get_notes(NoteType.LEFT))
+    right_note_count = len(song.get_notes(NoteType.RIGHT))
+
+    total_normal_notes = left_note_count + right_note_count
+    lines.append("total normal notes: {}".format(total_normal_notes))
+    lines.append("total bombs: {}".format(len(song.get_notes(NoteType.BOMB))))
+
+    lines.append("notes count (left,right): ({}, {})".format(left_note_count, right_note_count))
+
+    left_note_fraction = left_note_count / total_normal_notes
+    right_note_fraction = right_note_count / total_normal_notes
+
+    lines.append("notes leaning (left+, right-): {:.2f}".format(left_note_fraction - right_note_fraction))
+    return '\n'.join(lines)
 
 def build_note_heatmap(notes, cmap="YlGn"):
     notes_count = collections.Counter()
@@ -268,7 +322,30 @@ def build_cut_directions_drawing(notes):
 def build_basic_text(text):
     fig = plt.figure()
     plt.axis('off')
-    plt.text(0.05,0.05,text, transform=fig.transFigure, size=24)
+    plt.text(0.05,0.05,text, transform=fig.transFigure, size=14)
+
+def save_pdf(pdf_filepath, song):
+    with PdfPages(pdf_filepath) as pdf:
+        build_basic_text(get_basic_data_as_text(song))
+        pdf.savefig()
+        plt.close()
+        all_normal_notes = song.get_notes(NoteType.NORMAL)
+        build_note_heatmap(all_normal_notes)
+        plt.text(0, 2.75, "Total normal notes: {}".format(len(all_normal_notes)))
+        pdf.savefig()
+        plt.close()
+        all_bomb_notes = song.get_notes(NoteType.BOMB)
+        build_note_heatmap(all_bomb_notes, "Reds")
+        plt.text(0, 2.75, "Total bombs: {}".format(len(all_bomb_notes)))
+        pdf.savefig()
+        plt.close()
+        all_notes = song.get_notes()
+        build_histogram(all_notes)
+        pdf.savefig()
+        plt.close()
+        build_cut_directions_drawing(all_normal_notes)
+        pdf.savefig()
+        plt.close()
 
 def main():
     if len(sys.argv) < 2:
@@ -278,7 +355,7 @@ def main():
     parser = argparse.ArgumentParser(description='.')
     parser.add_argument('--path', help="Custom songs folder path for analyzing many custom songs.")
     parser.add_argument('--limit', type=int, default=None, help='numbers of songs to analyse, -1 then no limit')
-    parser.add_argument('--difficulty', type=str, choices=["Easy", "Normal", "Hard", "Expert", "ExpertPlus"], default="Expert", help='Difficulty of songs to analyze')
+    parser.add_argument('--difficulty', type=str, choices=SONG_DIFFICULTIES, default=None, help='Difficulty of songs to analyze, if not set then analyze all difficulties')
     parser.add_argument('--filter', default=None, help='text to use to filter songs')
     parser.add_argument('--operation', choices=['cumulative', 'single'], default='cumulative', help='Print more data')
 
@@ -286,7 +363,7 @@ def main():
 
     songs = []
     for ident_dir in os.listdir(args.path):
-        if args.limit and len(songs) > args.limit:
+        if args.limit and len(songs) >= args.limit:
             break
         root = os.path.join(args.path, ident_dir)
         song_ident = os.path.basename(ident_dir)
@@ -300,51 +377,24 @@ def main():
                     continue
                 if os.path.isdir(root):
                     for item in os.listdir(root):
-                        if os.path.isfile(os.path.join(root, item)) and "{}.json".format(args.difficulty) in item:
-                            song_json_filepath = os.path.join(root, item)
-                            print("{} _ {}".format(song_ident, song_name))
-                            songs.append(Song(song_ident, song_name, song_json_filepath))
+                        is_song = False
+                        filepath = os.path.join(root, item)
+                        (name, ext) = os.path.splitext(item)
+                        if os.path.isfile(filepath) and ext == SONG_EXTENSION:
+                            if args.difficulty:
+                                is_song = name == args.difficulty
+                            else:
+                                is_song = name in SONG_DIFFICULTIES
+                        if is_song:
+                            print("{} _ {} _ {}".format(song_ident, song_name, name))
+                            songs.append(Song(song_ident, song_name, name, filepath))
 
     if args.operation == 'cumulative':
-        with PdfPages("out/cumul.pdf") as pdf:
-            notes_by_songs = [s.get_notes(NoteType.NORMAL) for s in songs]
-            all_normal_notes = sorted([s for song in notes_by_songs for s in song], key = lambda x : x["_time"])
-            build_note_heatmap(all_normal_notes)
-            plt.text(0, 2.75, "total notes: {}".format(len(all_normal_notes)))
-            pdf.savefig()
-            plt.close()
-            bombs_by_songs = [s.get_notes(NoteType.BOMB) for s in songs]
-            all_bombs_notes = sorted([s for song in bombs_by_songs for s in song], key = lambda x : x["_time"])
-            build_note_heatmap(all_bombs_notes, "Reds")
-            plt.text(0, 2.75, "total bombs: {}".format(len(all_bombs_notes)))
-            pdf.savefig()
-            plt.close()
-            all_notes_by_songs = [s.get_notes() for s in songs]
-            all_notes = sorted([s for song in all_notes_by_songs for s in song], key = lambda x : x["_time"])
-            build_histogram(all_notes)
-            pdf.savefig()
-            plt.close()
-            build_cut_directions_drawing(all_normal_notes)
-            pdf.savefig()
-            plt.close()
+        song_collection = SongCollection(songs)
+        save_pdf("out/cumul.pdf", song_collection)
     elif args.operation == 'single':
         for s in songs:
-            with PdfPages("out/{}_{}.pdf".format(s.ident, s.name)) as pdf:
-                build_basic_text(s.log_basic_data())
-                pdf.savefig()
-                plt.close()
-                build_note_heatmap(s.get_notes(NoteType.NORMAL))
-                pdf.savefig()
-                plt.close()
-                build_note_heatmap(s.get_notes(NoteType.BOMB), "Reds")
-                pdf.savefig()
-                plt.close()
-                build_histogram(s.get_notes())
-                pdf.savefig()
-                plt.close()
-                build_cut_directions_drawing(s.get_notes(NoteType.NORMAL))
-                pdf.savefig()
-                plt.close()
+            save_pdf("out/{}_{}_{}.pdf".format(s.ident, s.name, s.difficulty), s)
     else:
         print("Unhandled operation type, error in code")
         sys.exit(1)
