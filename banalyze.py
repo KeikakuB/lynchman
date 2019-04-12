@@ -7,6 +7,10 @@ import pandas
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+import matplotlib.path as mpath
+import matplotlib.lines as mlines
+import matplotlib.patches as mpatches
+from matplotlib.collections import PatchCollection
 import json
 import sys
 import collections
@@ -85,41 +89,6 @@ class Song:
         right_note_fraction = right_note_count / total_normal_notes
 
         lines.append("notes leaning (left+, right-): {:.2f}".format(left_note_fraction - right_note_fraction))
-
-        cut_direction_count = collections.Counter()
-
-        for i in range(0, 9):
-            cut_direction_count[i] = 0
-
-        for n in self._notes:
-            cut_direction_count[n["_cutDirection"]] += 1
-
-        total_cuts = sum(cut_direction_count.values())
-        cut_percentages = []
-        for k in sorted(cut_direction_count.keys()):
-            cut_count = cut_direction_count[k]
-            cut_percentage = cut_count / total_cuts
-            cut_percentages.append(cut_percentage)
-
-        lines.append(
-"""
-       {:.2f}
-      ------
-     |      |
-{:.2f} | {:.2f} | {:.2f}
-     |      |
-      ------
-       {:.2f}
-
-       -
-      / \\
-{:.2f} /   \ {:.2f}
-    /     \\
-    \     /
-{:.2f} \   / {:.2f}
-      \ /
-       -
-""".format(cut_percentages[1],cut_percentages[3],cut_percentages[8],cut_percentages[2],cut_percentages[1],cut_percentages[7],cut_percentages[6],cut_percentages[5],cut_percentages[4]))
         return '\n'.join(lines)
 
 def build_note_heatmap(notes, cmap="YlGn"):
@@ -144,7 +113,6 @@ def build_note_heatmap(notes, cmap="YlGn"):
     texts = annotate_heatmap(im, valfmt="{x:.2f}")
 
     fig.tight_layout()
-    plt.show()
 
 def heatmap(data, row_labels, col_labels, ax=None,
             cbar_kw={}, cbarlabel="", **kwargs):
@@ -270,7 +238,41 @@ def build_histogram(notes, n_bins=60):
 
     # Tweak spacing to prevent clipping of ylabel
     fig.tight_layout()
-    plt.show()
+
+def build_cut_directions_drawing(notes):
+    fig, ax = plt.subplots()
+
+    s = 0.25
+
+    shifts = [(0, -s), (0, s), (s, 0), (-s, 0), (s, -s), (-s, -s), (s, s), (-s, s), (0, 0)]
+
+    cut_direction_count = collections.Counter()
+
+    for i in range(0, 9):
+        cut_direction_count[i] = 0
+
+    for n in notes:
+        cut_direction_count[n["_cutDirection"]] += 1
+
+    total_cuts = sum(cut_direction_count.values())
+    cut_percentages = []
+    for k in sorted(cut_direction_count.keys()):
+        cut_count = cut_direction_count[k]
+        cut_percentage = cut_count / total_cuts
+        cut_percentages.append(cut_percentage)
+
+    for i in range(0, len(shifts)):
+        shift = shifts[i]
+        x = 0.5 + shift[0]
+        y = 0.5 + shift[1]
+        plt.text(x, y, "{:.2f}".format(cut_percentages[i]), transform=fig.transFigure, ha="center", family='sans-serif', size=14)
+
+    plt.axis('off')
+
+def build_basic_text(text):
+    fig = plt.figure()
+    plt.axis('off')
+    plt.text(0.05,0.05,text, transform=fig.transFigure, size=24)
 
 def main():
     if len(sys.argv) < 2:
@@ -326,17 +328,25 @@ def main():
             build_histogram(all_notes)
             pdf.savefig()
             plt.close()
+            build_cut_directions_drawing(all_normal_notes)
+            pdf.savefig()
+            plt.close()
     elif args.operation == 'single':
         for s in songs:
             with PdfPages("out/{}_{}.pdf".format(s.ident, s.name)) as pdf:
+                build_basic_text(s.log_basic_data())
+                pdf.savefig()
+                plt.close()
                 build_note_heatmap(s.get_notes(NoteType.NORMAL))
-                plt.text(0, 2.75, s.log_basic_data())
                 pdf.savefig()
                 plt.close()
                 build_note_heatmap(s.get_notes(NoteType.BOMB), "Reds")
                 pdf.savefig()
                 plt.close()
                 build_histogram(s.get_notes())
+                pdf.savefig()
+                plt.close()
+                build_cut_directions_drawing(s.get_notes(NoteType.NORMAL))
                 pdf.savefig()
                 plt.close()
     else:
