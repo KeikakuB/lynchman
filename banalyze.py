@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import os
+import argparse
 import numpy as np
 import pandas
 import matplotlib
@@ -19,18 +21,36 @@ class NoteType(Enum):
     BOMB = 6
 
 class Song:
-    def __init__(self, json_filepath):
+    def __init__(self, ident, name, json_filepath):
+        self.ident = ident
+        self.name = name
         with open(json_filepath) as f:
-            self.data = json.load(f)
-        self.events = self.data["_events"]
-        self.notes = self.data["_notes"]
+            self._data = json.load(f)
+        self._events = self._data["_events"]
+        self._notes = self._data["_notes"]
+        self._notes_normal = self._get_notes(NoteType.NORMAL)
+        self._notes_left = self._get_notes(NoteType.LEFT)
+        self._notes_right = self._get_notes(NoteType.RIGHT)
+        self._notes_bomb = self._get_notes(NoteType.BOMB)
 
     def get_notes(self, note_type=NoteType.ALL):
+        if note_type == NoteType.ALL:
+            return self._notes
+        elif note_type == NoteType.NORMAL:
+            return self._notes_normal
+        elif note_type == NoteType.LEFT:
+            return self._notes_left
+        elif note_type == NoteType.RIGHT:
+            return self._notes_right
+        elif note_type == NoteType.BOMB:
+            return self._notes_bomb
+
+    def _get_notes(self, note_type=NoteType.ALL):
         # note_type: all, normal, left, right, bombs
         if note_type is NoteType.ALL:
-            return self.notes.copy()
+            return self._notes
         ls = []
-        for n in self.notes:
+        for n in self._notes:
             type_value = n["_type"]
             is_included = False
             if type_value == 0 or type_value == 1:
@@ -47,26 +67,31 @@ class Song:
         return ls
 
     def log_basic_data(self):
+        lines = []
         header_data_names = ["_version", "_beatsPerMinute", "_beatsPerBar", "_noteJumpSpeed", "_shuffle", "_shufflePeriod"]
         for n in header_data_names:
-            print("{}: {}".format(n[1:], self.data[n]))
+            lines.append("{}: {}".format(n[1:], self._data[n]))
 
         left_note_count = len(self.get_notes(NoteType.LEFT))
         right_note_count = len(self.get_notes(NoteType.RIGHT))
 
         total_normal_notes = left_note_count + right_note_count
-        print("total normal notes: {}".format(total_normal_notes))
+        lines.append("total normal notes: {}".format(total_normal_notes))
+        lines.append("total bombs: {}".format(len(self.get_notes(NoteType.BOMB))))
 
-        print("notes count (left,right): ({}, {})".format(left_note_count, right_note_count))
+        lines.append("notes count (left,right): ({}, {})".format(left_note_count, right_note_count))
 
-        left_note_percentage = left_note_count / total_normal_notes
-        right_note_percentage = right_note_count / total_normal_notes
+        left_note_fraction = left_note_count / total_normal_notes
+        right_note_fraction = right_note_count / total_normal_notes
 
-        print("notes percentage (left,right): ({:.2f}, {:.2f})".format(left_note_percentage, right_note_percentage))
+        lines.append("notes leaning (left+, right-): {:.2f}".format(left_note_fraction - right_note_fraction))
 
         cut_direction_count = collections.Counter()
 
-        for n in self.notes:
+        for i in range(0, 9):
+            cut_direction_count[i] = 0
+
+        for n in self._notes:
             cut_direction_count[n["_cutDirection"]] += 1
 
         total_cuts = sum(cut_direction_count.values())
@@ -76,7 +101,7 @@ class Song:
             cut_percentage = cut_count / total_cuts
             cut_percentages.append(cut_percentage)
 
-        print(
+        lines.append(
 """
        {:.2f}
       ------
@@ -95,6 +120,7 @@ class Song:
       \ /
        -
 """.format(cut_percentages[1],cut_percentages[3],cut_percentages[8],cut_percentages[2],cut_percentages[1],cut_percentages[7],cut_percentages[6],cut_percentages[5],cut_percentages[4]))
+        return '\n'.join(lines)
 
 def build_note_heatmap(notes, cmap="YlGn"):
     notes_count = collections.Counter()
@@ -239,8 +265,8 @@ def build_histogram(notes, n_bins=60):
     n, bins, patches = ax.hist(times, n_bins)
 
     ax.set_xlabel('Time (s)')
-    ax.set_ylabel('Number of Note')
-    ax.set_title(r'Histogram of Note over time')
+    ax.set_ylabel('Number of notes')
+    ax.set_title(r'Notes over time')
 
     # Tweak spacing to prevent clipping of ylabel
     fig.tight_layout()
@@ -250,21 +276,73 @@ def main():
     if len(sys.argv) < 2:
         print("python3 banalyze.py JSON_FILEPATH")
         sys.exit(1)
-    input_filename = sys.argv[1]
-    song = Song(input_filename)
 
-    song.log_basic_data()
+    parser = argparse.ArgumentParser(description='.')
+    parser.add_argument('--path', help="Custom songs folder path for analyzing many custom songs.")
+    parser.add_argument('--limit', type=int, default=None, help='numbers of songs to analyse, -1 then no limit')
+    parser.add_argument('--difficulty', type=str, choices=["Easy", "Normal", "Hard", "Expert", "ExpertPlus"], default="Expert", help='Difficulty of songs to analyze')
+    parser.add_argument('--filter', default=None, help='text to use to filter songs')
+    parser.add_argument('--operation', choices=['cumulative', 'single'], default='cumulative', help='Print more data')
 
-    with PdfPages('out/out.pdf') as pdf:
-        build_note_heatmap(song.get_notes(NoteType.NORMAL))
-        pdf.savefig()
-        plt.close()
-        build_note_heatmap(song.get_notes(NoteType.BOMB), "Reds")
-        pdf.savefig()
-        plt.close()
-        build_histogram(song.get_notes())
-        pdf.savefig()
-        plt.close()
+    args = parser.parse_args()
+
+    songs = []
+    for ident_dir in os.listdir(args.path):
+        if args.limit and len(songs) > args.limit:
+            break
+        root = os.path.join(args.path, ident_dir)
+        song_ident = os.path.basename(ident_dir)
+        if '-' not in song_ident:
+           continue
+        if os.path.isdir(root):
+            for name_dir in os.listdir(root):
+                root = os.path.join(root, name_dir)
+                song_name = os.path.basename(name_dir)
+                if args.filter and args.filter not in song_name:
+                    continue
+                if os.path.isdir(root):
+                    for item in os.listdir(root):
+                        if os.path.isfile(os.path.join(root, item)) and "{}.json".format(args.difficulty) in item:
+                            song_json_filepath = os.path.join(root, item)
+                            print("{} _ {}".format(song_ident, song_name))
+                            songs.append(Song(song_ident, song_name, song_json_filepath))
+
+    if args.operation == 'cumulative':
+        with PdfPages("out/cumul.pdf") as pdf:
+            notes_by_songs = [s.get_notes(NoteType.NORMAL) for s in songs]
+            all_normal_notes = sorted([s for song in notes_by_songs for s in song], key = lambda x : x["_time"])
+            build_note_heatmap(all_normal_notes)
+            plt.text(0, 2.75, "total notes: {}".format(len(all_normal_notes)))
+            pdf.savefig()
+            plt.close()
+            bombs_by_songs = [s.get_notes(NoteType.BOMB) for s in songs]
+            all_bombs_notes = sorted([s for song in bombs_by_songs for s in song], key = lambda x : x["_time"])
+            build_note_heatmap(all_bombs_notes, "Reds")
+            plt.text(0, 2.75, "total bombs: {}".format(len(all_bombs_notes)))
+            pdf.savefig()
+            plt.close()
+            all_notes_by_songs = [s.get_notes() for s in songs]
+            all_notes = sorted([s for song in all_notes_by_songs for s in song], key = lambda x : x["_time"])
+            build_histogram(all_notes)
+            pdf.savefig()
+            plt.close()
+    elif args.operation == 'single':
+        for s in songs:
+            with PdfPages("out/{}_{}.pdf".format(s.ident, s.name)) as pdf:
+                build_note_heatmap(s.get_notes(NoteType.NORMAL))
+                plt.text(0, 2.75, s.log_basic_data())
+                pdf.savefig()
+                plt.close()
+                build_note_heatmap(s.get_notes(NoteType.BOMB), "Reds")
+                pdf.savefig()
+                plt.close()
+                build_histogram(s.get_notes())
+                pdf.savefig()
+                plt.close()
+    else:
+        print("Unhandled operation type, error in code")
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
