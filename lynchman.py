@@ -7,12 +7,16 @@ import pandas
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.ticker import MaxNLocator
+from collections import namedtuple
 import json
 import sys
 import collections
 
 SONG_DIFFICULTIES=["Easy", "Normal", "Hard", "Expert", "ExpertPlus"]
 SONG_EXTENSION=".json"
+
+OPERATIONS=["multi", "single", "compare"]
 
 from enum import Enum
 
@@ -25,9 +29,41 @@ class NoteType(Enum):
     BOMB = 6
 
 class SongCollection:
-    def __init__(self, songs):
+    def __init__(self, root_directory, difficulty=None, text_filter=None, max_count=None):
+        self.difficulty = difficulty
+        self.text_filter = text_filter
+        self.max_count = max_count
+        songs = []
+        for ident_dir in os.listdir(root_directory):
+            if self.max_count and len(songs) >= max_count:
+                break
+            root = os.path.join(root_directory, ident_dir)
+            song_ident = os.path.basename(ident_dir)
+            if '-' not in song_ident:
+               continue
+            if os.path.isdir(root):
+                for name_dir in os.listdir(root):
+                    root = os.path.join(root, name_dir)
+                    song_name = os.path.basename(name_dir)
+                    if self.text_filter and self.text_filter not in song_name:
+                        continue
+                    if os.path.isdir(root):
+                        for item in os.listdir(root):
+                            is_song = False
+                            filepath = os.path.join(root, item)
+                            (name, ext) = os.path.splitext(item)
+                            if os.path.isfile(filepath) and ext == SONG_EXTENSION:
+                                if self.difficulty:
+                                    is_song = name == self.difficulty
+                                else:
+                                    is_song = name in SONG_DIFFICULTIES
+                            if is_song:
+                                songs.append(Song(song_ident, song_name, name, filepath))
         self._songs = songs
         self._number_of_songs = len(self._songs)
+
+    def get_songs(self):
+        return self._songs
 
     def get_number_of_songs(self):
         return self._number_of_songs
@@ -40,17 +76,38 @@ class SongCollection:
     def get_beats_per_minute(self):
         return sum([s.get_beats_per_minute() for s in self._songs]) / self.get_number_of_songs()
 
+    def get_beats_per_minute_std(self):
+        return np.std([s.get_beats_per_minute() for s in self._songs])
+
     def get_beats_per_bar(self):
         return sum([s.get_beats_per_bar() for s in self._songs]) / self.get_number_of_songs()
+
+    def get_beats_per_bar_std(self):
+        return np.std([s.get_beats_per_bar() for s in self._songs])
 
     def get_note_jump_speed(self):
         return sum([s.get_note_jump_speed() for s in self._songs]) / self.get_number_of_songs()
 
+    def get_note_jump_speed_std(self):
+        return np.std([s.get_note_jump_speed() for s in self._songs])
+
     def get_shuffle(self):
         return sum([s.get_shuffle() for s in self._songs]) / self.get_number_of_songs()
 
+    def get_shuffle_std(self):
+        return np.std([s.get_shuffle() for s in self._songs])
+
     def get_shuffle_period(self):
         return sum([s.get_shuffle_period() for s in self._songs]) / self.get_number_of_songs()
+
+    def get_shuffle_period_std(self):
+        return np.std([s.get_shuffle_period() for s in self._songs])
+
+    def get_average_duration_in_seconds_between_notes(self):
+        return sum([s.get_average_duration_in_seconds_between_notes() for s in self._songs]) / self.get_number_of_songs()
+
+    def get_average_duration_in_seconds_between_notes_std(self):
+        return np.std([s.get_average_duration_in_seconds_between_notes() for s in self._songs])
 
 class Song:
     def __init__(self, ident, name, difficulty, json_filepath):
@@ -117,6 +174,22 @@ class Song:
     def get_shuffle_period(self):
         return self._data["_shufflePeriod"]
 
+    def get_average_duration_in_seconds_between_notes(self):
+        all_normal_notes = self.get_notes(NoteType.NORMAL)
+        diffs = []
+        MAX_DURATION_IN_SECONDS_BETWEEN_NOTES = 4.0
+        # compute the average time between notes
+        for i in range(0, len(all_normal_notes) - 1):
+            t1 = all_normal_notes[i]["_time"]
+            t2 = all_normal_notes[i + 1]["_time"]
+            abs_diff = abs(t2 - t1)
+            if abs_diff < MAX_DURATION_IN_SECONDS_BETWEEN_NOTES:
+                diffs.append(abs_diff)
+
+        if len(diffs) == 0:
+            return MAX_DURATION_IN_SECONDS_BETWEEN_NOTES
+        return sum(diffs) / len(diffs)
+
 def get_basic_data_as_text(song):
     lines = []
 
@@ -140,16 +213,7 @@ def get_basic_data_as_text(song):
 
     lines.append("notes leaning (left+, right-): {:.2f}".format(left_note_fraction - right_note_fraction))
 
-    all_normal_notes = song.get_notes(NoteType.NORMAL)
-    diffs = []
-    # compute the average time between notes
-    for i in range(0, len(all_normal_notes) - 1):
-        t1 = all_normal_notes[i]["_time"]
-        t2 = all_normal_notes[i + 1]["_time"]
-        diffs.append(abs(t2 - t1))
-
-    average_difference_in_seconds = sum(diffs) / len(diffs)
-    lines.append("average difference in seconds between notes: {:.2f}".format(average_difference_in_seconds))
+    lines.append("average difference in seconds between notes: {:.2f}".format(song.get_average_duration_in_seconds_between_notes()))
 
     return '\n'.join(lines)
 
@@ -343,6 +407,59 @@ def build_basic_text(text):
     plt.axis('off')
     plt.text(0.05,0.05,text, transform=fig.transFigure, size=14)
 
+def save_bar_charts_pdf(pdf_filepath, song_collections):
+    with PdfPages(pdf_filepath) as pdf:
+        build_bar_chart(song_collections, 'Number of songs', lambda c : c.get_number_of_songs())
+        pdf.savefig()
+        plt.close()
+        build_bar_chart(song_collections, 'Average Duration between Notes (s)', lambda c : c.get_average_duration_in_seconds_between_notes(), lambda c : c.get_average_duration_in_seconds_between_notes_std())
+        pdf.savefig()
+        plt.close()
+        build_bar_chart(song_collections, 'Note Jump Speed', lambda c : c.get_note_jump_speed(), lambda c : c.get_note_jump_speed_std())
+        pdf.savefig()
+        plt.close()
+        build_bar_chart(song_collections, 'BMP', lambda c : c.get_beats_per_minute(), lambda c : c.get_beats_per_minute_std())
+        pdf.savefig()
+        plt.close()
+        build_bar_chart(song_collections, 'BMB', lambda c : c.get_beats_per_bar(), lambda c : c.get_beats_per_bar_std())
+        pdf.savefig()
+        plt.close()
+        # build_bar_chart(song_collections, 'Shuffle', lambda c : c.get_shuffle(), lambda c : c.get_shuffle_std())
+        # pdf.savefig()
+        # plt.close()
+        # build_bar_chart(song_collections, 'Shuffle period', lambda c : c.get_shuffle_period(), lambda c : c.get_shuffle_period_std())
+        # pdf.savefig()
+        # plt.close()
+
+def build_bar_chart(song_collections, value_name, fn_val, fn_std=None, color='b'):
+    n_difficulties = len(song_collections)
+
+    values = tuple([fn_val(c) for c in song_collections])
+    std_values = None
+    if fn_std:
+        std_values = tuple([fn_std(c) for c in song_collections])
+
+    fig, ax = plt.subplots()
+
+    index = np.arange(n_difficulties)
+    bar_width = 0.35
+
+    opacity = 0.4
+    error_config = {'ecolor': '0.3'}
+
+    rects1 = ax.bar(index + bar_width / 2, values, bar_width,
+                    alpha=opacity, color=color,
+                    yerr=std_values, error_kw=error_config)
+
+    ax.set_xlabel('Difficulty')
+    ax.set_ylabel(value_name)
+    ax.set_title("{} by Difficulty".format(value_name))
+    ax.set_xticks(index + bar_width / 2)
+    ax.set_xticklabels(tuple([c.difficulty for c in song_collections]))
+
+    fig.tight_layout()
+
+
 def save_pdf(pdf_filepath, song):
     with PdfPages(pdf_filepath) as pdf:
         build_basic_text(get_basic_data_as_text(song))
@@ -373,50 +490,36 @@ def main():
 
     parser = argparse.ArgumentParser(description='.')
     parser.add_argument('--path', help="Custom songs folder path for analyzing many custom songs.")
-    parser.add_argument('--limit', type=int, default=None, help='numbers of songs to analyse, -1 then no limit')
     parser.add_argument('--difficulty', type=str, choices=SONG_DIFFICULTIES, default=None, help='Difficulty of songs to analyze, if not set then analyze all difficulties')
-    parser.add_argument('--filter', default=None, help='text to use to filter songs')
-    parser.add_argument('--operation', choices=['cumulative', 'single'], default='cumulative', help='Print more data')
-    parser.add_argument('--output_filename', type=str, default="cumul", help='filename to output to when performing a cumulative operation')
+    parser.add_argument('--text_filter', default=None, help='text to use to filter songs')
+    parser.add_argument('--max_count', type=int, default=None, help="Numbers of songs to analyse, -1 then no maximum.")
+    parser.add_argument('--output_filename', type=str, default="cumul", help='Filename to output to when performing certain operations.')
+    parser.add_argument('--operations', nargs='+', choices=OPERATIONS, default=[OPERATIONS[0]], help='')
 
     args = parser.parse_args()
 
-    songs = []
-    for ident_dir in os.listdir(args.path):
-        if args.limit and len(songs) >= args.limit:
-            break
-        root = os.path.join(args.path, ident_dir)
-        song_ident = os.path.basename(ident_dir)
-        if '-' not in song_ident:
-           continue
-        if os.path.isdir(root):
-            for name_dir in os.listdir(root):
-                root = os.path.join(root, name_dir)
-                song_name = os.path.basename(name_dir)
-                if args.filter and args.filter not in song_name:
-                    continue
-                if os.path.isdir(root):
-                    for item in os.listdir(root):
-                        is_song = False
-                        filepath = os.path.join(root, item)
-                        (name, ext) = os.path.splitext(item)
-                        if os.path.isfile(filepath) and ext == SONG_EXTENSION:
-                            if args.difficulty:
-                                is_song = name == args.difficulty
-                            else:
-                                is_song = name in SONG_DIFFICULTIES
-                        if is_song:
-                            songs.append(Song(song_ident, song_name, name, filepath))
-
-    if args.operation == 'cumulative':
-        song_collection = SongCollection(songs)
-        save_pdf("out/{}.pdf".format(args.output_filename), song_collection)
-        song_descriptors = ["{} _ {} _ {}".format(s.ident, s.name, s.difficulty) for s in songs]
-        with open("out/{}.txt".format(args.output_filename), 'wt', encoding='utf-8') as f:
+    if OPERATIONS[0] in args.operations:
+        song_collection = SongCollection(args.path, difficulty=args.difficulty, text_filter=args.text_filter, max_count=args.max_count)
+        save_pdf("out/{}_{}.pdf".format(args.output_filename, OPERATIONS[0]), song_collection)
+        song_descriptors = ["{} _ {} _ {}".format(s.ident, s.name, s.difficulty) for s in song_collection.get_songs()]
+        with open("out/{}_{}.txt".format(args.output_filename, OPERATIONS[0]), 'wt', encoding='utf-8') as f:
             f.write('\n'.join(song_descriptors))
-    elif args.operation == 'single':
-        for s in songs:
-            save_pdf("out/{}_{}_{}.pdf".format(s.ident, s.name, s.difficulty), s)
+    if OPERATIONS[1] in args.operations:
+        for s in song_collection.get_songs():
+            save_pdf("out/{}_{}_{}_{}_{}.pdf".format(args.output_filename, OPERATIONS[1], s.ident, s.name, s.difficulty), s)
+    if OPERATIONS[2] in args.operations:
+        collections = []
+        lines = []
+        for d in SONG_DIFFICULTIES:
+            song_collection = SongCollection(args.path, difficulty=d, max_count=args.max_count, text_filter=args.text_filter)
+            lines.append("{} - {} songs".format(d, song_collection.get_number_of_songs()))
+            collections.append(song_collection)
+            song_descriptors = ["  {} _ {} _ {}".format(s.ident, s.name, s.difficulty) for s in song_collection.get_songs()]
+            lines.extend(song_descriptors)
+        with open("out/{}_{}.txt".format(args.output_filename, OPERATIONS[2]), 'wt', encoding='utf-8') as f:
+            f.write('\n'.join(lines))
+        save_bar_charts_pdf("out/{}_{}.pdf".format(args.output_filename, OPERATIONS[2]), collections)
+
     else:
         print("Unhandled operation type, error in code")
         sys.exit(1)
