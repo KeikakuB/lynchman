@@ -109,6 +109,12 @@ class SongCollection:
     def get_average_duration_in_seconds_between_notes_std(self):
         return np.std([s.get_average_duration_in_seconds_between_notes() for s in self._songs])
 
+    def get_left_right_lean_fraction(self):
+        return sum([s.get_left_right_lean_fraction() for s in self._songs]) / self.get_number_of_songs()
+
+    def get_left_right_lean_fraction_std(self):
+        return np.std([s.get_left_right_lean_fraction() for s in self._songs])
+
 class Song:
     def __init__(self, ident, name, difficulty, json_filepath):
         self.ident = ident
@@ -190,6 +196,13 @@ class Song:
             return MAX_DURATION_IN_SECONDS_BETWEEN_NOTES
         return sum(diffs) / len(diffs)
 
+    def get_left_right_lean_fraction(self):
+        """ A positive number mean that the song has more right than left notes, a negative number means the opposite and zero means that there are an equal number of both. """
+        n_left_notes = len(self.get_notes(NoteType.LEFT))
+        n_right_notes = len(self.get_notes(NoteType.RIGHT))
+        n_normal_notes = n_left_notes + n_right_notes
+        return (n_right_notes - n_left_notes) / n_normal_notes
+
 def get_basic_data_as_text(song):
     lines = []
 
@@ -199,19 +212,19 @@ def get_basic_data_as_text(song):
     lines.append("shuffle: {:.2f}".format(song.get_shuffle()))
     lines.append("shufflePeriod: {:.2f}".format(song.get_shuffle_period()))
 
-    left_note_count = len(song.get_notes(NoteType.LEFT))
-    right_note_count = len(song.get_notes(NoteType.RIGHT))
+    n_left_notes = len(song.get_notes(NoteType.LEFT))
+    n_right_notes = len(song.get_notes(NoteType.RIGHT))
 
-    total_normal_notes = left_note_count + right_note_count
-    lines.append("total normal notes: {}".format(total_normal_notes))
+    n_normal_notes = n_left_notes + n_right_notes
+    lines.append("total normal notes: {}".format(n_normal_notes))
     lines.append("total bombs: {}".format(len(song.get_notes(NoteType.BOMB))))
 
-    lines.append("notes count (left,right): ({}, {})".format(left_note_count, right_note_count))
+    lines.append("notes count (left,right): ({}, {})".format(n_left_notes, n_right_notes))
 
-    left_note_fraction = left_note_count / total_normal_notes
-    right_note_fraction = right_note_count / total_normal_notes
+    left_note_fraction = n_left_notes / n_normal_notes
+    right_note_fraction = n_right_notes / n_normal_notes
 
-    lines.append("notes leaning (left+, right-): {:.2f}".format(left_note_fraction - right_note_fraction))
+    lines.append("notes leaning (left-, right+): {:.2f}".format(song.get_left_right_lean_fraction()))
 
     lines.append("average difference in seconds between notes: {:.2f}".format(song.get_average_duration_in_seconds_between_notes()))
 
@@ -415,6 +428,9 @@ def save_bar_charts_pdf(pdf_filepath, song_collections):
         build_bar_chart(song_collections, 'Average Duration between Notes (s)', lambda c : c.get_average_duration_in_seconds_between_notes(), lambda c : c.get_average_duration_in_seconds_between_notes_std())
         pdf.savefig()
         plt.close()
+        build_bar_chart(song_collections, 'Left/Right(-/+) Lean', lambda c : c.get_left_right_lean_fraction(), lambda c : c.get_left_right_lean_fraction_std())
+        pdf.savefig()
+        plt.close()
         build_bar_chart(song_collections, 'Note Jump Speed', lambda c : c.get_note_jump_speed(), lambda c : c.get_note_jump_speed_std())
         pdf.savefig()
         plt.close()
@@ -451,6 +467,24 @@ def build_bar_chart(song_collections, value_name, fn_val, fn_std=None, color='b'
                     alpha=opacity, color=color,
                     yerr=std_values, error_kw=error_config)
 
+    rect_labels = []
+    # Lastly, write in the ranking inside each bar to aid in interpretation
+    for i in range(len(rects1)):
+        rect = rects1[i]
+        # Rectangle widths are already integer-valued but are floating
+        # type, so it helps to remove the trailing decimal point and 0 by
+        # converting width to int type
+        width = rect.get_width()
+        height = rect.get_height()
+
+        # Center the text vertically in the bar
+        xloc = rect.get_x() + width / 2
+        yloc = rect.get_y() + height / 2
+        label = ax.text(xloc, yloc, "{:.2f}".format(values[i]), horizontalalignment='center',
+                         verticalalignment='center', color='black', weight='bold',
+                         clip_on=True, size=7)
+        rect_labels.append(label)
+
     ax.set_xlabel('Difficulty')
     ax.set_ylabel(value_name)
     ax.set_title("{} by Difficulty".format(value_name))
@@ -458,7 +492,6 @@ def build_bar_chart(song_collections, value_name, fn_val, fn_std=None, color='b'
     ax.set_xticklabels(tuple([c.difficulty for c in song_collections]))
 
     fig.tight_layout()
-
 
 def save_pdf(pdf_filepath, song):
     with PdfPages(pdf_filepath) as pdf:
@@ -523,7 +556,6 @@ def main():
     else:
         print("Unhandled operation type, error in code")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
