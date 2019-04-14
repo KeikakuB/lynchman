@@ -12,6 +12,7 @@ from collections import namedtuple
 import json
 import sys
 import collections
+import librosa
 
 from mutagen.oggvorbis import OggVorbis
 
@@ -19,9 +20,26 @@ MAP_DIFFICULTIES=["Easy", "Normal", "Hard", "Expert", "ExpertPlus"]
 MAP_EXTENSION=".json"
 SONG_EXTENSION=".ogg"
 
-OPERATIONS=["multi", "single", "compare"]
+OPERATIONS=["multi", "single", "compare", "generate"]
+
 
 from enum import Enum
+
+class JsonNoteType(Enum):
+    LEFT = 0
+    RIGHT = 1
+    BOMB = 3
+
+class JsonNoteCutDirection(Enum):
+    SOUTH = 0
+    NORTH = 1
+    EAST = 2
+    WEST = 3
+    SOUTH_EAST = 4
+    SOUTH_WEST = 5
+    NORTH_EAST = 6
+    NORTH_WEST = 7
+    NONE = 8
 
 class NoteType(Enum):
     NONE = 1
@@ -540,6 +558,7 @@ def save_pdf(pdf_filepath, _map):
 def main():
     parser = argparse.ArgumentParser(description='.')
     parser.add_argument('--path', help="Custom songs folder path.")
+    parser.add_argument('--audio_filepath', help="Audio file path to use for the 'generate' operation.")
     parser.add_argument('--difficulty', type=str, choices=MAP_DIFFICULTIES, default=None, help='Difficulty of maps to analyze, if not set then analyze all difficulties')
     parser.add_argument('--text_filter', default=None, help='text to use to filter maps.')
     parser.add_argument('--max_count', type=int, default=None, help="Numbers of maps to analyse, -1 then no maximum.")
@@ -574,6 +593,80 @@ def main():
         with open("{}.txt".format(args.output_filepath), 'wt', encoding='utf-8') as f:
             f.write('\n'.join(lines))
         save_bar_charts_pdf("{}.pdf".format(args.output_filepath), collections)
+    if not is_operation_handled and OPERATIONS[3] in args.operations:
+        is_operation_handled = True
+        # Load the audio as a waveform `y`
+        #  Store the sampling rate as `sr`
+        y, sr = librosa.load(args.audio_filepath)
+
+        # Run the default beat tracker
+        tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr)
+
+        # Convert the frame indices of beat events into timestamps
+        beat_times = librosa.frames_to_time(beat_frames, sr=sr)
+
+        difficulty = "Expert"
+
+        # Output basic notes to json
+        beats_per_minute = round(float("{:.2f}".format(tempo)))
+
+        data = {}
+        data["_version"] = "1.5.0"
+        data["_beatsPerMinute"] = beats_per_minute
+        data["_beatsPerBar"] = 16
+        data["_noteJumpSpeed"] = 10
+        data["_shuffle"] = 0
+        data["_shufflePeriod"] = 0.5
+        data["_time"] = 0
+        notes = []
+        i = 0
+        for b in beat_times:
+            lineIndex = 1
+            lineLayer = 0
+            note_type = JsonNoteType.LEFT
+            if i % 2 == 0:
+                lineIndex = 2
+                note_type = JsonNoteType.RIGHT
+            notes.append({
+                "_time": float("{:.16f}".format(b)),
+                "_lineIndex": lineIndex,
+                "_lineLayer": lineLayer,
+                "_type": note_type.value,
+                "_cutDirection": JsonNoteCutDirection.NONE.value
+            }
+            )
+            i = i + 1
+        data["_events"] = []
+        data["_notes"] = notes
+        data["_obstacles"] = []
+        data["_bookmarks"] = []
+
+        with open(os.path.join(args.output_filepath, "{}.json".format(difficulty)), 'w') as outfile:
+            json.dump(data, outfile)
+
+        audio_filename = os.path.basename(args.audio_filepath)
+        (audio_name, _) = os.path.splitext(audio_filename)
+        info_data = {}
+        info_data["authorName"] = "KeikakuB"
+        info_data["beatsPerMinute"] = beats_per_minute
+        info_data["coverImagePath"] = "cover.jpg"
+        info_data["difficultyLevels"] = [{
+            "audioPath": audio_filename,
+            "difficulty": difficulty,
+            "difficultyRank": 4,
+            "jsonPath": "{}{}".format(difficulty, MAP_EXTENSION),
+            "offset": 0,
+            "oldOffset": 0
+        }]
+        info_data["environmentName"] =  "DefaultEnvironment"
+        info_data["previewDuration"] =  10
+        info_data["previewStartTime"] =  12
+        info_data["songName"] =  audio_name
+        info_data["songSubName"] =  ""
+
+        with open(os.path.join(args.output_filepath, "info.json"), 'w') as outfile:
+            json.dump(info_data, outfile)
+
 
     if not is_operation_handled:
         print("Unhandled operation type, error in code")
