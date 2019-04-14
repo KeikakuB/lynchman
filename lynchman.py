@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import random
 import argparse
 import numpy as np
 import pandas
@@ -15,6 +16,11 @@ import collections
 import librosa
 
 from mutagen.oggvorbis import OggVorbis
+
+N_HANDS=2
+N_LINE_INDEX=4
+N_LINE_LAYER=3
+N_CUT_DIRECTIONS=9
 
 MAP_DIFFICULTIES=["Easy", "Normal", "Hard", "Expert", "ExpertPlus"]
 MAP_EXTENSION=".json"
@@ -582,19 +588,94 @@ def main():
             save_pdf("{}_{}_{}_{}.pdf".format(args.output_filepath, s.ident, s.name, s.difficulty), s)
     if OPERATIONS[2] in args.operations:
         is_operation_handled = True
-        collections = []
+        map_collections = []
         lines = []
         for d in MAP_DIFFICULTIES:
             map_collection = MapCollection(args.path, difficulty=d, max_count=args.max_count, text_filter=args.text_filter)
             lines.append("{} - {} maps".format(d, map_collection.get_number_of_maps()))
-            collections.append(map_collection)
+            map_collections.append(map_collection)
             map_descriptors = ["  {} _ {} _ {}".format(s.ident, s.name, s.difficulty) for s in map_collection.get_maps()]
             lines.extend(map_descriptors)
         with open("{}.txt".format(args.output_filepath), 'wt', encoding='utf-8') as f:
             f.write('\n'.join(lines))
-        save_bar_charts_pdf("{}.pdf".format(args.output_filepath), collections)
+        save_bar_charts_pdf("{}.pdf".format(args.output_filepath), map_collections)
     if not is_operation_handled and OPERATIONS[3] in args.operations:
         is_operation_handled = True
+
+        map_collection = MapCollection(args.path, difficulty=args.difficulty, text_filter=args.text_filter, max_count=args.max_count)
+
+        blocks = []
+        for hand in range(N_HANDS):
+            for index in range(N_LINE_INDEX):
+                for layer in range(N_LINE_LAYER):
+                    blocks.append((hand, index, layer))
+
+        n_cut_directions_by_grid_position = {}
+        for (hand, index, layer) in blocks:
+            counter = collections.Counter()
+            for c in range(N_CUT_DIRECTIONS):
+                counter[c] = 0
+            n_cut_directions_by_grid_position[(hand, index, layer)] = counter
+
+        for m in map_collection.get_maps():
+            for n in m.get_notes(NoteType.NORMAL):
+                hand = n["_type"]
+                lineIndex = n["_lineIndex"]
+                lineLayer = n["_lineLayer"]
+                cutDirection = n["_cutDirection"]
+                n_cut_directions_by_grid_position[(hand, lineIndex, lineLayer)][cutDirection] += 1
+
+        n_notes = n_cut_directions_by_grid_position.copy()
+        for (hand, index, layer) in blocks:
+            d = dict(n_cut_directions_by_grid_position[(hand, index, layer)])
+            n_total = sum(d.values())
+            n_notes[(hand, index, layer)] = n_total
+            ls = [(k, v / n_total) for (k,v) in d.items()]
+            n_cut_directions_by_grid_position[(hand, index, layer)] = sorted(ls, key=lambda a :  -a[1])
+
+        # print(repr(n_cut_directions_by_grid_position[(0,0)]))
+        for (hand, index, layer) in blocks:
+            ls = n_cut_directions_by_grid_position[(hand, index, layer)]
+            current_probability = 0
+            for t in range(len(ls)):
+                (a, probability) = ls[t]
+                current_probability += probability
+                ls[t] = (current_probability, a)
+
+        # print(repr(n_notes))
+        n_total_notes = sum(n_notes.values())
+        for (hand, index, layer) in blocks:
+            n_notes[(hand, index, layer)] = ((hand, index, layer), n_notes[(hand, index, layer)] / n_total_notes)
+
+        n_notes = n_notes.values()
+        n_notes = sorted(n_notes, key=lambda a :  -a[1])
+        # print(repr(n_notes))
+
+        current_probability = 0
+        for t in range(len(n_notes)):
+            (coords, probability) = n_notes[t]
+            current_probability += probability
+            n_notes[t] = (current_probability, coords)
+        # print(repr(n_notes))
+
+        def get_weighted_random_coords():
+            random_value = random.random()
+            for (v, coords) in n_notes:
+                if random_value <= v:
+                    return coords
+            return n_notes[len(n_notes) - 1][1]
+
+        def get_weighted_random_cut_direction(hand, lineIndex, lineLayer):
+            ls = n_cut_directions_by_grid_position[(hand, lineIndex, lineLayer)]
+            random_value = random.random()
+            for (v, cut_direction) in ls:
+                if random_value <= v:
+                    return cut_direction
+            return ls [len(ls) - 1][1]
+
+        # print(repr(n_cut_directions_by_grid_position))
+        # print(repr(n_cut_directions_by_grid_position[(0,0)]))
+
         # Load the audio as a waveform `y`
         #  Store the sampling rate as `sr`
         y, sr = librosa.load(args.audio_filepath)
@@ -619,20 +700,18 @@ def main():
         data["_shufflePeriod"] = 0.5
         data["_time"] = 0
         notes = []
-        i = 0
-        for b in beat_times:
-            lineIndex = 1
-            lineLayer = 0
-            note_type = JsonNoteType.LEFT
-            if i % 2 == 0:
-                lineIndex = 2
-                note_type = JsonNoteType.RIGHT
+        for i in range(0, len(beat_times), 2):
+            b = beat_times[i]
+            (hand, lineIndex, lineLayer) = get_weighted_random_coords()
+            note_type = JsonNoteType.RIGHT
+            if hand == JsonNoteType.LEFT.value:
+                note_type = JsonNoteType.LEFT
             notes.append({
                 "_time": float("{:.16f}".format(b)),
                 "_lineIndex": lineIndex,
                 "_lineLayer": lineLayer,
                 "_type": note_type.value,
-                "_cutDirection": JsonNoteCutDirection.NONE.value
+                "_cutDirection": get_weighted_random_cut_direction(hand, lineIndex, lineLayer)
             }
             )
             i = i + 1
