@@ -55,6 +55,220 @@ class NoteType(Enum):
     RIGHT = 5
     BOMB = 6
 
+class Song:
+    def __init__(self, audio_filepath):
+        self._audio_filepath = audio_filepath
+        # Load the audio as a waveform `y`
+        #  Store the sampling rate as `sr`
+        self._y, self._sr = librosa.load(audio_filepath)
+
+        # Run the default beat tracker
+        self._tempo, self._beat_frames = librosa.beat.beat_track(y=self._y, sr=self._sr)
+
+        # Convert the frame indices of beat events into timestamps
+        self._beat_times = librosa.frames_to_time(self._beat_frames, sr=self._sr)
+
+        self._beats_per_minute = round(float("{:.2f}".format(self._tempo)))
+
+    def get_beat_times(self):
+        return self._beat_times
+
+    def get_beats_per_minute(self):
+        return self._beats_per_minute
+
+    def _generate_map(self, output_directory, difficulty_name, map_generator):
+        in_notes = []
+        in_obstacles = []
+        in_events = []
+
+        map_generator.generate(in_notes, in_obstacles, in_events)
+
+        data = {}
+        data["_version"] = "1.5.0"
+        data["_beatsPerMinute"] = self.get_beats_per_minute()
+        data["_beatsPerBar"] = 16
+        data["_noteJumpSpeed"] = 10
+        data["_shuffle"] = 0
+        data["_shufflePeriod"] = 0.5
+        data["_time"] = 0
+        data["_events"] = in_events
+        data["_notes"] = in_notes
+        data["_obstacles"] = in_obstacles
+        data["_bookmarks"] = []
+
+        with open(os.path.join(output_directory, "{}.json".format(difficulty_name)), 'w') as outfile:
+            json.dump(data, outfile)
+
+    def generate_maps(self, output_directory, map_generators):
+        for (name, _, generator) in map_generators:
+            self._generate_map(output_directory, name, generator)
+
+        audio_filename = os.path.basename(self._audio_filepath)
+        (audio_name, _) = os.path.splitext(audio_filename)
+        info_data = {}
+        info_data["authorName"] = "KeikakuB"
+        info_data["beatsPerMinute"] = self.get_beats_per_minute()
+        info_data["coverImagePath"] = "cover.jpg"
+        difficulty_levels = []
+        for (name, rank, generator) in map_generators:
+            difficulty_levels.append({
+                "audioPath": audio_filename,
+                "difficulty": name,
+                "difficultyRank": rank,
+                "jsonPath": "{}{}".format(name, MAP_EXTENSION),
+                "offset": 0,
+                "oldOffset": 0
+            }
+            )
+        info_data["difficultyLevels"] = difficulty_levels
+        info_data["environmentName"] =  "DefaultEnvironment"
+        info_data["previewDuration"] =  10
+        info_data["previewStartTime"] =  12
+        info_data["songName"] =  audio_name
+        info_data["songSubName"] =  ""
+
+        with open(os.path.join(output_directory, "info.json"), 'w') as outfile:
+            json.dump(info_data, outfile)
+
+class MapGeneratorBeatStrategy:
+    def __init__(self, song):
+        self._song = song
+
+    def generate(self, out_notes, out_obstacles, out_events):
+        beat_times = self._song.get_beat_times()
+        for i in range(0, len(beat_times), 2):
+            b = beat_times[i]
+            note_type = JsonNoteType.RIGHT
+            line_index = 2
+            line_layer = 0
+            cut_direction = N_CUT_DIRECTIONS - 1
+            out_notes.append({
+                "_time": float("{:.16f}".format(b)),
+                "_lineIndex": line_index,
+                "_lineLayer": line_layer,
+                "_type": note_type.value,
+                "_cutDirection": cut_direction
+            }
+            )
+
+class MapGeneratorRandomStrategy:
+    def __init__(self, song):
+        self._song = song
+
+    def generate(self, out_notes, out_obstacles, out_events):
+        beat_times = self._song.get_beat_times()
+        for i in range(0, len(beat_times), 2):
+            b = beat_times[i]
+            hand = random.randrange(N_HANDS)
+            note_type = JsonNoteType.RIGHT
+            if hand == JsonNoteType.LEFT.value:
+                note_type = JsonNoteType.LEFT
+            line_index = random.randrange(N_LINE_INDEX)
+            line_layer = random.randrange(N_LINE_LAYER)
+            cut_direction = random.randrange(N_CUT_DIRECTIONS)
+            out_notes.append({
+                "_time": float("{:.16f}".format(b)),
+                "_lineIndex": line_index,
+                "_lineLayer": line_layer,
+                "_type": note_type.value,
+                "_cutDirection": cut_direction
+            }
+            )
+
+class MapGeneratorWeightedRandomStrategy:
+    def __init__(self, song, map_collection):
+        self._song = song
+        self._map_collection = map_collection
+
+    def generate(self, out_notes, out_obstacles, out_events):
+        blocks = []
+        for hand in range(N_HANDS):
+            for index in range(N_LINE_INDEX):
+                for layer in range(N_LINE_LAYER):
+                    blocks.append((hand, index, layer))
+
+        n_cut_directions_by_grid_position = {}
+        for (hand, index, layer) in blocks:
+            counter = collections.Counter()
+            for c in range(N_CUT_DIRECTIONS):
+                counter[c] = 0
+            n_cut_directions_by_grid_position[(hand, index, layer)] = counter
+
+        for m in self._map_collection.get_maps():
+            for n in m.get_notes(NoteType.NORMAL):
+                hand = n["_type"]
+                line_index = n["_lineIndex"]
+                line_layer = n["_lineLayer"]
+                cutDirection = n["_cutDirection"]
+                n_cut_directions_by_grid_position[(hand, line_index, line_layer)][cutDirection] += 1
+
+        n_notes = n_cut_directions_by_grid_position.copy()
+        for (hand, index, layer) in blocks:
+            d = dict(n_cut_directions_by_grid_position[(hand, index, layer)])
+            n_total = sum(d.values())
+            n_notes[(hand, index, layer)] = n_total
+            ls = [(k, v / n_total) for (k,v) in d.items()]
+            n_cut_directions_by_grid_position[(hand, index, layer)] = sorted(ls, key=lambda a :  -a[1])
+
+        # print(repr(n_cut_directions_by_grid_position[(0,0)]))
+        for (hand, index, layer) in blocks:
+            ls = n_cut_directions_by_grid_position[(hand, index, layer)]
+            current_probability = 0
+            for t in range(len(ls)):
+                (a, probability) = ls[t]
+                current_probability += probability
+                ls[t] = (current_probability, a)
+
+        # print(repr(n_notes))
+        n_total_notes = sum(n_notes.values())
+        for (hand, index, layer) in blocks:
+            n_notes[(hand, index, layer)] = ((hand, index, layer), n_notes[(hand, index, layer)] / n_total_notes)
+
+        n_notes = n_notes.values()
+        n_notes = sorted(n_notes, key=lambda a :  -a[1])
+        # print(repr(n_notes))
+
+        current_probability = 0
+        for t in range(len(n_notes)):
+            (coords, probability) = n_notes[t]
+            current_probability += probability
+            n_notes[t] = (current_probability, coords)
+        # print(repr(n_notes))
+
+        def get_weighted_random_coords():
+            random_value = random.random()
+            for (v, coords) in n_notes:
+                if random_value <= v:
+                    return coords
+            return n_notes[len(n_notes) - 1][1]
+
+        def get_weighted_random_cut_direction(hand, line_index, line_layer):
+            ls = n_cut_directions_by_grid_position[(hand, line_index, line_layer)]
+            random_value = random.random()
+            for (v, cut_direction) in ls:
+                if random_value <= v:
+                    return cut_direction
+            return ls [len(ls) - 1][1]
+
+        # print(repr(n_cut_directions_by_grid_position))
+        # print(repr(n_cut_directions_by_grid_position[(0,0)]))
+
+        beat_times = self._song.get_beat_times()
+        for i in range(0, len(beat_times), 2):
+            b = beat_times[i]
+            (hand, line_index, line_layer) = get_weighted_random_coords()
+            note_type = JsonNoteType.RIGHT
+            if hand == JsonNoteType.LEFT.value:
+                note_type = JsonNoteType.LEFT
+            out_notes.append({
+                "_time": float("{:.16f}".format(b)),
+                "_lineIndex": line_index,
+                "_lineLayer": line_layer,
+                "_type": note_type.value,
+                "_cutDirection": get_weighted_random_cut_direction(hand, line_index, line_layer)
+            }
+            )
+
 class MapCollection:
     def __init__(self, root_directory, difficulty=None, text_filter=None, max_count=None):
         self.difficulty = difficulty
@@ -604,148 +818,14 @@ def main():
 
         map_collection = MapCollection(args.path, difficulty=args.difficulty, text_filter=args.text_filter, max_count=args.max_count)
 
-        blocks = []
-        for hand in range(N_HANDS):
-            for index in range(N_LINE_INDEX):
-                for layer in range(N_LINE_LAYER):
-                    blocks.append((hand, index, layer))
+        song = Song(args.audio_filepath)
 
-        n_cut_directions_by_grid_position = {}
-        for (hand, index, layer) in blocks:
-            counter = collections.Counter()
-            for c in range(N_CUT_DIRECTIONS):
-                counter[c] = 0
-            n_cut_directions_by_grid_position[(hand, index, layer)] = counter
-
-        for m in map_collection.get_maps():
-            for n in m.get_notes(NoteType.NORMAL):
-                hand = n["_type"]
-                lineIndex = n["_lineIndex"]
-                lineLayer = n["_lineLayer"]
-                cutDirection = n["_cutDirection"]
-                n_cut_directions_by_grid_position[(hand, lineIndex, lineLayer)][cutDirection] += 1
-
-        n_notes = n_cut_directions_by_grid_position.copy()
-        for (hand, index, layer) in blocks:
-            d = dict(n_cut_directions_by_grid_position[(hand, index, layer)])
-            n_total = sum(d.values())
-            n_notes[(hand, index, layer)] = n_total
-            ls = [(k, v / n_total) for (k,v) in d.items()]
-            n_cut_directions_by_grid_position[(hand, index, layer)] = sorted(ls, key=lambda a :  -a[1])
-
-        # print(repr(n_cut_directions_by_grid_position[(0,0)]))
-        for (hand, index, layer) in blocks:
-            ls = n_cut_directions_by_grid_position[(hand, index, layer)]
-            current_probability = 0
-            for t in range(len(ls)):
-                (a, probability) = ls[t]
-                current_probability += probability
-                ls[t] = (current_probability, a)
-
-        # print(repr(n_notes))
-        n_total_notes = sum(n_notes.values())
-        for (hand, index, layer) in blocks:
-            n_notes[(hand, index, layer)] = ((hand, index, layer), n_notes[(hand, index, layer)] / n_total_notes)
-
-        n_notes = n_notes.values()
-        n_notes = sorted(n_notes, key=lambda a :  -a[1])
-        # print(repr(n_notes))
-
-        current_probability = 0
-        for t in range(len(n_notes)):
-            (coords, probability) = n_notes[t]
-            current_probability += probability
-            n_notes[t] = (current_probability, coords)
-        # print(repr(n_notes))
-
-        def get_weighted_random_coords():
-            random_value = random.random()
-            for (v, coords) in n_notes:
-                if random_value <= v:
-                    return coords
-            return n_notes[len(n_notes) - 1][1]
-
-        def get_weighted_random_cut_direction(hand, lineIndex, lineLayer):
-            ls = n_cut_directions_by_grid_position[(hand, lineIndex, lineLayer)]
-            random_value = random.random()
-            for (v, cut_direction) in ls:
-                if random_value <= v:
-                    return cut_direction
-            return ls [len(ls) - 1][1]
-
-        # print(repr(n_cut_directions_by_grid_position))
-        # print(repr(n_cut_directions_by_grid_position[(0,0)]))
-
-        # Load the audio as a waveform `y`
-        #  Store the sampling rate as `sr`
-        y, sr = librosa.load(args.audio_filepath)
-
-        # Run the default beat tracker
-        tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr)
-
-        # Convert the frame indices of beat events into timestamps
-        beat_times = librosa.frames_to_time(beat_frames, sr=sr)
-
-        difficulty = "Expert"
-
-        # Output basic notes to json
-        beats_per_minute = round(float("{:.2f}".format(tempo)))
-
-        data = {}
-        data["_version"] = "1.5.0"
-        data["_beatsPerMinute"] = beats_per_minute
-        data["_beatsPerBar"] = 16
-        data["_noteJumpSpeed"] = 10
-        data["_shuffle"] = 0
-        data["_shufflePeriod"] = 0.5
-        data["_time"] = 0
-        notes = []
-        for i in range(0, len(beat_times), 2):
-            b = beat_times[i]
-            (hand, lineIndex, lineLayer) = get_weighted_random_coords()
-            note_type = JsonNoteType.RIGHT
-            if hand == JsonNoteType.LEFT.value:
-                note_type = JsonNoteType.LEFT
-            notes.append({
-                "_time": float("{:.16f}".format(b)),
-                "_lineIndex": lineIndex,
-                "_lineLayer": lineLayer,
-                "_type": note_type.value,
-                "_cutDirection": get_weighted_random_cut_direction(hand, lineIndex, lineLayer)
-            }
-            )
-            i = i + 1
-        data["_events"] = []
-        data["_notes"] = notes
-        data["_obstacles"] = []
-        data["_bookmarks"] = []
-
-        with open(os.path.join(args.output_filepath, "{}.json".format(difficulty)), 'w') as outfile:
-            json.dump(data, outfile)
-
-        audio_filename = os.path.basename(args.audio_filepath)
-        (audio_name, _) = os.path.splitext(audio_filename)
-        info_data = {}
-        info_data["authorName"] = "KeikakuB"
-        info_data["beatsPerMinute"] = beats_per_minute
-        info_data["coverImagePath"] = "cover.jpg"
-        info_data["difficultyLevels"] = [{
-            "audioPath": audio_filename,
-            "difficulty": difficulty,
-            "difficultyRank": 4,
-            "jsonPath": "{}{}".format(difficulty, MAP_EXTENSION),
-            "offset": 0,
-            "oldOffset": 0
-        }]
-        info_data["environmentName"] =  "DefaultEnvironment"
-        info_data["previewDuration"] =  10
-        info_data["previewStartTime"] =  12
-        info_data["songName"] =  audio_name
-        info_data["songSubName"] =  ""
-
-        with open(os.path.join(args.output_filepath, "info.json"), 'w') as outfile:
-            json.dump(info_data, outfile)
-
+        map_generators = [
+            ("Beat", 1, MapGeneratorBeatStrategy(song)),
+            ("Random", 3, MapGeneratorRandomStrategy(song)),
+            ("Weighted Random", 4, MapGeneratorWeightedRandomStrategy(song, map_collection))
+        ]
+        song.generate_maps(args.output_filepath, map_generators)
 
     if not is_operation_handled:
         print("Unhandled operation type, error in code")
