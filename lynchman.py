@@ -244,7 +244,8 @@ def build_note_heatmap(notes, cmap="YlGn"):
                         [notes_count[(0, 1)], notes_count[(1, 1)], notes_count[(2, 1)], notes_count[(3, 1)]],
                         [notes_count[(0, 0)], notes_count[(1, 0)], notes_count[(2, 0)], notes_count[(3, 0)]]])
 
-    data = data / len(notes)
+    if len(notes) > 0:
+        data = data / len(notes)
 
     fig, ax = plt.subplots()
 
@@ -526,21 +527,26 @@ def main():
     parser.add_argument('--difficulty', type=str, choices=SONG_DIFFICULTIES, default=None, help='Difficulty of songs to analyze, if not set then analyze all difficulties')
     parser.add_argument('--text_filter', default=None, help='text to use to filter songs')
     parser.add_argument('--max_count', type=int, default=None, help="Numbers of songs to analyse, -1 then no maximum.")
-    parser.add_argument('--output_filename', type=str, default="cumul", help='Filename to output to when performing certain operations.')
+    parser.add_argument('--output_filepath', type=str, default="OUTPUT", help='Filename to output to when performing certain operations.')
     parser.add_argument('--operations', nargs='+', choices=OPERATIONS, default=[OPERATIONS[0]], help='')
 
     args = parser.parse_args()
 
+    is_operation_handled = False
     if OPERATIONS[0] in args.operations:
+        is_operation_handled = True
         song_collection = SongCollection(args.path, difficulty=args.difficulty, text_filter=args.text_filter, max_count=args.max_count)
-        save_pdf("out/{}_{}.pdf".format(args.output_filename, OPERATIONS[0]), song_collection)
+        save_pdf("{}.pdf".format(args.output_filepath), song_collection)
         song_descriptors = ["{} _ {} _ {}".format(s.ident, s.name, s.difficulty) for s in song_collection.get_songs()]
-        with open("out/{}_{}.txt".format(args.output_filename, OPERATIONS[0]), 'wt', encoding='utf-8') as f:
+        with open("{}.txt".format(args.output_filepath), 'wt', encoding='utf-8') as f:
             f.write('\n'.join(song_descriptors))
     if OPERATIONS[1] in args.operations:
+        is_operation_handled = True
+        song_collection = SongCollection(args.path, difficulty=args.difficulty, text_filter=args.text_filter, max_count=args.max_count)
         for s in song_collection.get_songs():
-            save_pdf("out/{}_{}_{}_{}_{}.pdf".format(args.output_filename, OPERATIONS[1], s.ident, s.name, s.difficulty), s)
+            save_pdf("{}_{}_{}_{}.pdf".format(args.output_filepath, s.ident, s.name, s.difficulty), s)
     if OPERATIONS[2] in args.operations:
+        is_operation_handled = True
         collections = []
         lines = []
         for d in SONG_DIFFICULTIES:
@@ -549,11 +555,11 @@ def main():
             collections.append(song_collection)
             song_descriptors = ["  {} _ {} _ {}".format(s.ident, s.name, s.difficulty) for s in song_collection.get_songs()]
             lines.extend(song_descriptors)
-        with open("out/{}_{}.txt".format(args.output_filename, OPERATIONS[2]), 'wt', encoding='utf-8') as f:
+        with open("{}.txt".format(args.output_filepath), 'wt', encoding='utf-8') as f:
             f.write('\n'.join(lines))
-        save_bar_charts_pdf("out/{}_{}.pdf".format(args.output_filename, OPERATIONS[2]), collections)
+        save_bar_charts_pdf("{}.pdf".format(args.output_filepath), collections)
 
-    else:
+    if not is_operation_handled:
         print("Unhandled operation type, error in code")
         sys.exit(1)
 

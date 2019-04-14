@@ -1,4 +1,5 @@
-Easy - 40 songs
+Easy - 55 songs
+  11040-11684 _ Ghosts n Stuff (feat. Rob Swire) _ Easy
   11050-11697 _ Huey Lewis - The power of love _ Easy
   11123-11794 _ Animals v2 _ Easy
   11265-11950 _ Cowboy Bebop RUSH _ Easy
@@ -9,6 +10,9 @@ Easy - 40 songs
   11921-12717 _ The City - Madeon_Moriik _ Easy
   12414-13276 _ CeeLo Green ft.Jack Black - King Fu Fighting _ Easy
   12550-13429 _ Whatever It Takes _ Easy
+  13137-14112 _ Soca Kingdom _ Easy
+  13791-14873 _ Bust A Move _ Easy
+  14303-15463 _ BIBA _ Easy
   14343-15507 _ Max 300 _ Easy
   14344-15508 _ Midnite Blaze _ Easy
   14345-15509 _ Candy _ Easy
@@ -18,7 +22,15 @@ Easy - 40 songs
   14350-15514 _ Rhythm and Police (K.O.G G3 Mix) _ Easy
   14352-15516 _ Sakura _ Easy
   14353-15517 _ Dance Dance Revolution _ Easy
+  14503-15685 _ Alone _ Easy
+  14850-16068 _ Paper Planes _ Easy
   15464-16764 _ Butterfly _ Easy
+  15508-16816 _ Shes Kerosene _ Easy
+  15550-16868 _ Meant to Live - Switchfoot _ Easy
+  15772-17118 _ Kamikaze _ Easy
+  15998-17377 _ Find That Someone - Moriik _ Easy
+  16259-17652 _ Power Glove _ Easy
+  16297-17691 _ Getsix Orion _ Easy
   1817-1258 _ Tongue Tied _ Easy
   2213-1532 _ Waiting for Love - Avicii _ Easy
   2302-1590 _ Burn _ Easy
@@ -33,15 +45,19 @@ Easy - 40 songs
   7337-7094 _ Electric Kiss _ Easy
   810-534 _ Cut Your Teeth _ Easy
   8114-8170 _ POPSTARS _ Easy
+  8662-8842 _ All good things - For the glory (Edit) _ Easy
+  8706-8895 _ Hold Me Down _ Easy
   881-590 _ Maculate - Get Schwifty _ Easy
   8877-9108 _ Are You Gonna Be My Girl _ Easy
+  8914-9155 _ Without Me - ILLENIUM Remix _ Easy
   9054-9332 _ GameTime _ Easy
   9074-9356 _ Zero _ Easy
   9639-10572 _ tofubeats - CANDYYYLAND (Pa's Lam System Remix) V2 by Saut _ Easy
   9690-10090 _ Hideki Naganuma - AIN'T NOTHIN' LIKE A FUNKY BEAT _ Easy
-Normal - 89 songs
+Normal - 115 songs
   10271-10785 _ RBB - Red Velvet _ Normal
   1092-745 _ Blow Me Away _ Normal
+  11040-11684 _ Ghosts n Stuff (feat. Rob Swire) _ Normal
   11050-11697 _ Huey Lewis - The power of love _ Normal
   1107-6105 _ What You Know (BPM Fix) _ Normal
   11123-11794 _ Animals v2 _ Normal
@@ -58,8 +74,18 @@ Normal - 89 songs
   122-69 _ Knife Party - Give It Up _ Normal
   12414-13276 _ CeeLo Green ft.Jack Black - King Fu Fighting _ Normal
   12550-13429 _ Whatever It Takes _ Normal
+  12674-13566 _ Boom Kah _ Normal
+  12696-13593 _ Happier Sunflower _ Normal
   1290-900 _ Gravity _ Normal
+  13351-14371 _ Try Everything _ Normal
   1358-945 _ Lethargy _ Normal
+  13630-14697 _ Lukas Graham - 7 Years _ Normal
+  13791-14873 _ Bust A Move _ Normal
+  13971-15074 _ I Dont Wanna Be In Love _ Normal
+  14040-15153 _ Wolfgang Lohr and Maskerade - Hit the Road Jack (Electro Swing) _ Normal
+  14239-15389 _ Sound of an Orchestra _ Normal
+  14303-15463 _ BIBA _ Normal
+  14332-15494 _ The Anthem _ Normal
   14343-15507 _ Max 300 _ Normal
   14344-15508 _ Midnite Blaze _ Normal
   14345-15509 _ Candy _ Normal
@@ -69,10 +95,20 @@ Normal - 89 songs
   14350-15514 _ Rhythm and Police (K.O.G G3 Mix) _ Normal
   14352-15516 _ Sakura _ Normal
   14353-15517 _ Dance Dance Revolution _ Normal
+  14503-15685 _ Alone _ Normal
+  14850-16068 _ Paper Planes _ Normal
   1498-1051 _ Dangerous Night _ Normal
+  15014-16249 _ Here With Me - Marshmello _ Normal
+  15229-16495 _ Nural - Stop Me When Youve Had Enough _ Normal
   15464-16764 _ Butterfly _ Normal
+  15508-16816 _ Shes Kerosene _ Normal
+  15550-16868 _ Meant to Live - Switchfoot _ Normal
+  15772-17118 _ Kamikaze _ Normal
   1582-1113 _ Royals (Yinyues Remix) - Lorde _ Normal
   1592-1122 _ The Nights - Avicii _ Normal
+  15998-17377 _ Find That Someone - Moriik _ Normal
+  16259-17652 _ Power Glove _ Normal
+  16297-17691 _ Getsix Orion _ Normal
   165-101 _ Awe _ Normal
   1817-1258 _ Tongue Tied _ Normal
   1850-1283 _ California Gurls-Katy Perry _ Normal
@@ -115,6 +151,8 @@ Normal - 89 songs
   6716-6357 _ Oh No! _ Normal
   674-437 _ Electra Heart _ Normal
   676-439 _ Walk on Water _ Normal
+  6815-6476 _ Better When I'm Dancin' _ Normal
+  6833-6495 _ Under The Sea _ Normal
   6924-6602 _ Bubble Pop - Hyuna _ Normal
   6933-6613 _ Baby Got Back _ Normal
   712-467 _ DJ S3RL - Click Bait _ Normal
@@ -123,15 +161,19 @@ Normal - 89 songs
   810-534 _ Cut Your Teeth _ Normal
   8114-8170 _ POPSTARS _ Normal
   8555-8719 _ Serendipity _ Normal
+  8662-8842 _ All good things - For the glory (Edit) _ Normal
+  8706-8895 _ Hold Me Down _ Normal
   881-590 _ Maculate - Get Schwifty _ Normal
   8877-9108 _ Are You Gonna Be My Girl _ Normal
+  8914-9155 _ Without Me - ILLENIUM Remix _ Normal
   9054-9332 _ GameTime _ Normal
   9074-9356 _ Zero _ Normal
   9639-10572 _ tofubeats - CANDYYYLAND (Pa's Lam System Remix) V2 by Saut _ Normal
   9690-10090 _ Hideki Naganuma - AIN'T NOTHIN' LIKE A FUNKY BEAT _ Normal
-Hard - 142 songs
+Hard - 174 songs
   10271-10785 _ RBB - Red Velvet _ Hard
   1092-745 _ Blow Me Away _ Hard
+  11040-11684 _ Ghosts n Stuff (feat. Rob Swire) _ Hard
   11050-11697 _ Huey Lewis - The power of love _ Hard
   1107-6105 _ What You Know (BPM Fix) _ Hard
   11123-11794 _ Animals v2 _ Hard
@@ -152,10 +194,20 @@ Hard - 142 songs
   122-69 _ Knife Party - Give It Up _ Hard
   12414-13276 _ CeeLo Green ft.Jack Black - King Fu Fighting _ Hard
   12550-13429 _ Whatever It Takes _ Hard
+  12674-13566 _ Boom Kah _ Hard
   1290-900 _ Gravity _ Hard
+  13137-14112 _ Soca Kingdom _ Hard
   1316-915 _ Dragostea Din Tei _ Hard
   13245-14237 _ Knockin' on my heaven's door _ Hard
+  13351-14371 _ Try Everything _ Hard
   1358-945 _ Lethargy _ Hard
+  13630-14697 _ Lukas Graham - 7 Years _ Hard
+  13791-14873 _ Bust A Move _ Hard
+  13971-15074 _ I Dont Wanna Be In Love _ Hard
+  14040-15153 _ Wolfgang Lohr and Maskerade - Hit the Road Jack (Electro Swing) _ Hard
+  14239-15389 _ Sound of an Orchestra _ Hard
+  14303-15463 _ BIBA _ Hard
+  14332-15494 _ The Anthem _ Hard
   14343-15507 _ Max 300 _ Hard
   14344-15508 _ Midnite Blaze _ Hard
   14345-15509 _ Candy _ Hard
@@ -165,12 +217,26 @@ Hard - 142 songs
   14350-15514 _ Rhythm and Police (K.O.G G3 Mix) _ Hard
   14352-15516 _ Sakura _ Hard
   14353-15517 _ Dance Dance Revolution _ Hard
+  14457-15635 _ Tonight _ Hard
+  14503-15685 _ Alone _ Hard
+  14850-16068 _ Paper Planes _ Hard
   1498-1051 _ Dangerous Night _ Hard
+  15014-16249 _ Here With Me - Marshmello _ Hard
+  15029-16267 _ High Enough ft. Rosie Darling _ Hard
   1517-1065 _ WAIDMANNS HEIL _ Hard
+  15229-16495 _ Nural - Stop Me When Youve Had Enough _ Hard
   15464-16764 _ Butterfly _ Hard
+  15482-16784 _ dont need nobody _ Hard
+  15508-16816 _ Shes Kerosene _ Hard
+  15550-16868 _ Meant to Live - Switchfoot _ Hard
   1567-1101 _ Stonebank - Be Alright _ Hard
+  15685-17021 _ End Of The Night _ Hard
+  15772-17118 _ Kamikaze _ Hard
   1582-1113 _ Royals (Yinyues Remix) - Lorde _ Hard
   1592-1122 _ The Nights - Avicii _ Hard
+  15998-17377 _ Find That Someone - Moriik _ Hard
+  16259-17652 _ Power Glove _ Hard
+  16297-17691 _ Getsix Orion _ Hard
   165-101 _ Awe _ Hard
   1745-1222 _ Uprising _ Hard
   1772-1237 _ TetrisEffect _ Hard
@@ -253,6 +319,9 @@ Hard - 142 songs
   6500-6115 _ Eraser _ Hard
   6716-6357 _ Oh No! _ Hard
   676-439 _ Walk on Water _ Hard
+  6815-6476 _ Better When I'm Dancin' _ Hard
+  6833-6495 _ Under The Sea _ Hard
+  6849-6512 _ Still Into You - Paramore _ Hard
   6924-6602 _ Bubble Pop - Hyuna _ Hard
   6933-6613 _ Baby Got Back _ Hard
   712-467 _ DJ S3RL - Click Bait _ Hard
@@ -265,19 +334,25 @@ Hard - 142 songs
   8114-8170 _ POPSTARS _ Hard
   8439-8567 _ Touch - NCT 127 _ Hard
   8555-8719 _ Serendipity _ Hard
+  8662-8842 _ All good things - For the glory (Edit) _ Hard
+  8706-8895 _ Hold Me Down _ Hard
   881-590 _ Maculate - Get Schwifty _ Hard
   8877-9108 _ Are You Gonna Be My Girl _ Hard
+  8914-9155 _ Without Me - ILLENIUM Remix _ Hard
   893-598 _ Rainbow Notes _ Hard
   9054-9332 _ GameTime _ Hard
   9074-9356 _ Zero _ Hard
+  9219-9520 _ Your Love _ Hard
   9639-10572 _ tofubeats - CANDYYYLAND (Pa's Lam System Remix) V2 by Saut _ Hard
   9690-10090 _ Hideki Naganuma - AIN'T NOTHIN' LIKE A FUNKY BEAT _ Hard
-Expert - 176 songs
+Expert - 217 songs
   10271-10785 _ RBB - Red Velvet _ Expert
   1046-707 _ Koto _ Expert
   1078-733 _ Get Low _ Expert
   1092-745 _ Blow Me Away _ Expert
   10984-11619 _ Kind Lady _ Expert
+  10992-11630 _ Footloose _ Expert
+  11040-11684 _ Ghosts n Stuff (feat. Rob Swire) _ Expert
   11050-11697 _ Huey Lewis - The power of love _ Expert
   1107-6105 _ What You Know (BPM Fix) _ Expert
   11123-11794 _ Animals v2 _ Expert
@@ -297,14 +372,26 @@ Expert - 176 songs
   12164-12996 _ Jam Jam - IU _ Expert
   12165-12998 _ Moves Like Jagger _ Expert
   12391-13249 _ MONSTA X Shoot Out _ Expert
+  12392-13250 _ Drive By _ Expert
   12414-13276 _ CeeLo Green ft.Jack Black - King Fu Fighting _ Expert
   12488-13366 _ Baba Yetu _ Expert
   12550-13429 _ Whatever It Takes _ Expert
+  12674-13566 _ Boom Kah _ Expert
+  12696-13593 _ Happier Sunflower _ Expert
   1290-900 _ Gravity _ Expert
+  13069-14037 _ mayday _ Expert
   13245-14237 _ Knockin' on my heaven's door _ Expert
   1352-941 _ Trip To Ireland _ Expert
   1358-945 _ Lethargy _ Expert
+  13630-14697 _ Lukas Graham - 7 Years _ Expert
+  13791-14873 _ Bust A Move _ Expert
+  13971-15074 _ I Dont Wanna Be In Love _ Expert
+  14040-15153 _ Wolfgang Lohr and Maskerade - Hit the Road Jack (Electro Swing) _ Expert
+  14102-15227 _ Wobble - Crankdat & Tisoki _ Expert
   14117-15245 _ Move Your Feet _ Expert
+  14239-15389 _ Sound of an Orchestra _ Expert
+  14303-15463 _ BIBA _ Expert
+  14332-15494 _ The Anthem _ Expert
   14343-15507 _ Max 300 _ Expert
   14344-15508 _ Midnite Blaze _ Expert
   14345-15509 _ Candy _ Expert
@@ -314,13 +401,33 @@ Expert - 176 songs
   14350-15514 _ Rhythm and Police (K.O.G G3 Mix) _ Expert
   14352-15516 _ Sakura _ Expert
   14353-15517 _ Dance Dance Revolution _ Expert
+  14457-15635 _ Tonight _ Expert
+  14503-15685 _ Alone _ Expert
+  14728-15932 _ Hey, Soul Sister _ Expert
+  14850-16068 _ Paper Planes _ Expert
+  14871-16089 _ Happy _ Expert
+  14952-16180 _ Sk8er Boi Avril Lavigne _ Expert
   1498-1051 _ Dangerous Night _ Expert
+  15014-16249 _ Here With Me - Marshmello _ Expert
+  15029-16267 _ High Enough ft. Rosie Darling _ Expert
   1517-1065 _ WAIDMANNS HEIL _ Expert
+  15229-16495 _ Nural - Stop Me When Youve Had Enough _ Expert
   15464-16764 _ Butterfly _ Expert
+  15482-16784 _ dont need nobody _ Expert
+  15508-16816 _ Shes Kerosene _ Expert
+  15550-16868 _ Meant to Live - Switchfoot _ Expert
   1567-1101 _ Stonebank - Be Alright _ Expert
+  15685-17021 _ End Of The Night _ Expert
+  15772-17118 _ Kamikaze _ Expert
   1582-1113 _ Royals (Yinyues Remix) - Lorde _ Expert
   1587-1118 _ CAN'T STOP THE FEELING! _ Expert
   1592-1122 _ The Nights - Avicii _ Expert
+  15998-17377 _ Find That Someone - Moriik _ Expert
+  16070-17454 _ Shut it Down _ Expert
+  16093-17477 _ Runaway Baby V2 _ Expert
+  16108-17493 _ TWICE - LIKEY _ Expert
+  16259-17652 _ Power Glove _ Expert
+  16297-17691 _ Getsix Orion _ Expert
   163-99 _ Run Boy Run _ Expert
   1641-1161 _ Five Hours (Don't Hold Me Back) _ Expert
   1643-1162 _ Tank! (Ben Briggs Remix) _ Expert
@@ -427,6 +534,9 @@ Expert - 176 songs
   6716-6357 _ Oh No! _ Expert
   674-437 _ Electra Heart _ Expert
   676-439 _ Walk on Water _ Expert
+  6815-6476 _ Better When I'm Dancin' _ Expert
+  6833-6495 _ Under The Sea _ Expert
+  6849-6512 _ Still Into You - Paramore _ Expert
   6924-6602 _ Bubble Pop - Hyuna _ Expert
   6933-6613 _ Baby Got Back _ Expert
   7098-6808 _ Coconut Cabana - Ikura _ Expert
@@ -441,15 +551,19 @@ Expert - 176 songs
   8203-8273 _ Heart Shaker _ Expert
   8439-8567 _ Touch - NCT 127 _ Expert
   8555-8719 _ Serendipity _ Expert
+  8662-8842 _ All good things - For the glory (Edit) _ Expert
+  8706-8895 _ Hold Me Down _ Expert
   881-590 _ Maculate - Get Schwifty _ Expert
   8877-9108 _ Are You Gonna Be My Girl _ Expert
+  8914-9155 _ Without Me - ILLENIUM Remix _ Expert
   893-598 _ Rainbow Notes _ Expert
   8939-9187 _ Sunflower _ Expert
   9054-9332 _ GameTime _ Expert
   9074-9356 _ Zero _ Expert
+  9219-9520 _ Your Love _ Expert
   9639-10572 _ tofubeats - CANDYYYLAND (Pa's Lam System Remix) V2 by Saut _ Expert
   9690-10090 _ Hideki Naganuma - AIN'T NOTHIN' LIKE A FUNKY BEAT _ Expert
-ExpertPlus - 55 songs
+ExpertPlus - 78 songs
   10271-10785 _ RBB - Red Velvet _ ExpertPlus
   1107-6105 _ What You Know (BPM Fix) _ ExpertPlus
   11265-11950 _ Cowboy Bebop RUSH _ ExpertPlus
@@ -462,8 +576,14 @@ ExpertPlus - 55 songs
   12017-12826 _ Glass Shoes - fromis_9 _ ExpertPlus
   12165-12998 _ Moves Like Jagger _ ExpertPlus
   12550-13429 _ Whatever It Takes _ ExpertPlus
+  13125-14100 _ To The Stars _ ExpertPlus
+  13137-14112 _ Soca Kingdom _ ExpertPlus
+  13218-14209 _ Can't get enough _ ExpertPlus
   1358-945 _ Lethargy _ ExpertPlus
+  13791-14873 _ Bust A Move _ ExpertPlus
+  14102-15227 _ Wobble - Crankdat & Tisoki _ ExpertPlus
   14117-15245 _ Move Your Feet _ ExpertPlus
+  14303-15463 _ BIBA _ ExpertPlus
   14343-15507 _ Max 300 _ ExpertPlus
   14344-15508 _ Midnite Blaze _ ExpertPlus
   14345-15509 _ Candy _ ExpertPlus
@@ -473,8 +593,22 @@ ExpertPlus - 55 songs
   14350-15514 _ Rhythm and Police (K.O.G G3 Mix) _ ExpertPlus
   14352-15516 _ Sakura _ ExpertPlus
   14353-15517 _ Dance Dance Revolution _ ExpertPlus
+  14503-15685 _ Alone _ ExpertPlus
+  14850-16068 _ Paper Planes _ ExpertPlus
+  15029-16267 _ High Enough ft. Rosie Darling _ ExpertPlus
+  15285-16562 _ Alone feat. Kyle Reynolds _ ExpertPlus
+  15410-16699 _ Girlfriend _ ExpertPlus
   15464-16764 _ Butterfly _ ExpertPlus
+  15508-16816 _ Shes Kerosene _ ExpertPlus
   1567-1101 _ Stonebank - Be Alright _ ExpertPlus
+  15802-17267 _ Came Here for Love _ ExpertPlus
+  15902-17271 _ The Greatest _ ExpertPlus
+  15997-17375 _ NyanCatElevator _ ExpertPlus
+  15998-17377 _ Find That Someone - Moriik _ ExpertPlus
+  16070-17454 _ Shut it Down _ ExpertPlus
+  16108-17493 _ TWICE - LIKEY _ ExpertPlus
+  16259-17652 _ Power Glove _ ExpertPlus
+  16297-17691 _ Getsix Orion _ ExpertPlus
   2019-1406 _ When Can I See You Again _ ExpertPlus
   2164-1494 _ Bonfire _ ExpertPlus
   2811-8516 _ Shut Up and Dance _ ExpertPlus
@@ -496,11 +630,14 @@ ExpertPlus - 55 songs
   6054-5553 _ Blood Hunter _ ExpertPlus
   6353-5910 _ Empty Threat _ ExpertPlus
   6489-11449 _ On Top of the World _ ExpertPlus
+  6833-6495 _ Under The Sea _ ExpertPlus
   7337-7094 _ Electric Kiss _ ExpertPlus
   7507-7321 _ Duality _ ExpertPlus
   7934-11424 _ POP STARS (KDA) _ ExpertPlus
   8114-8170 _ POPSTARS _ ExpertPlus
+  8706-8895 _ Hold Me Down _ ExpertPlus
   8877-9108 _ Are You Gonna Be My Girl _ ExpertPlus
+  8914-9155 _ Without Me - ILLENIUM Remix _ ExpertPlus
   9054-9332 _ GameTime _ ExpertPlus
   9149-9443 _ The Other Side _ ExpertPlus
   9620-10002 _ I Knew You Were In Trouble _ ExpertPlus
