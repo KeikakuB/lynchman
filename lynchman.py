@@ -15,9 +15,9 @@ import collections
 
 from mutagen.oggvorbis import OggVorbis
 
-SONG_DIFFICULTIES=["Easy", "Normal", "Hard", "Expert", "ExpertPlus"]
-SONG_EXTENSION=".json"
-SONGFILE_EXTENSION=".ogg"
+MAP_DIFFICULTIES=["Easy", "Normal", "Hard", "Expert", "ExpertPlus"]
+MAP_EXTENSION=".json"
+SONG_EXTENSION=".ogg"
 
 OPERATIONS=["multi", "single", "compare"]
 
@@ -31,18 +31,18 @@ class NoteType(Enum):
     RIGHT = 5
     BOMB = 6
 
-class SongCollection:
+class MapCollection:
     def __init__(self, root_directory, difficulty=None, text_filter=None, max_count=None):
         self.difficulty = difficulty
         self.text_filter = text_filter
         self.max_count = max_count
-        songs = []
+        maps = []
         for ident_dir in os.listdir(root_directory):
-            if self.max_count and len(songs) >= max_count:
+            if self.max_count and len(maps) >= max_count:
                 break
             root = os.path.join(root_directory, ident_dir)
-            tmp_songs = []
-            song_file = None
+            tmp_maps = []
+            audio_filepath = None
             song_ident = os.path.basename(ident_dir)
             if '-' not in song_ident:
                continue
@@ -54,90 +54,90 @@ class SongCollection:
                         continue
                     if os.path.isdir(root):
                         for item in os.listdir(root):
-                            is_song = False
+                            is_map = False
                             filepath = os.path.join(root, item)
-                            (name, ext) = os.path.splitext(item)
-                            if os.path.isfile(filepath) and ext == SONGFILE_EXTENSION:
-                                song_file = filepath
+                            (filename, ext) = os.path.splitext(item)
                             if os.path.isfile(filepath) and ext == SONG_EXTENSION:
+                                audio_filepath = filepath
+                            if os.path.isfile(filepath) and ext == MAP_EXTENSION:
                                 if self.difficulty:
-                                    is_song = name == self.difficulty
+                                    is_map = filename == self.difficulty
                                 else:
-                                    is_song = name in SONG_DIFFICULTIES
-                            if is_song:
-                                tmp_songs.append((song_ident, song_name, name, filepath))
-            for s in tmp_songs:
-                songs.append(Song(s[0], s[1], s[2], s[3], song_file))
-        self._songs = songs
-        self._number_of_songs = len(self._songs)
+                                    is_map = filename in MAP_DIFFICULTIES
+                            if is_map:
+                                tmp_maps.append((song_ident, song_name, filename, filepath))
+            for s in tmp_maps:
+                maps.append(Map(s[0], s[1], s[2], s[3], audio_filepath))
+        self._maps = maps
+        self._n_maps = len(self._maps)
 
-    def get_songs(self):
-        return self._songs
+    def get_maps(self):
+        return self._maps
 
-    def get_number_of_songs(self):
-        return self._number_of_songs
+    def get_number_of_maps(self):
+        return self._n_maps
 
     def get_notes(self, note_type=NoteType.ALL):
-        notes_by_songs = [s.get_notes(note_type) for s in self._songs]
-        notes = [s for song in notes_by_songs for s in song]
+        notes_by_map = [m.get_notes(note_type) for m in self._maps]
+        notes = [m for _map in notes_by_map for m in _map]
         return notes
 
     def get_beats_per_minute(self):
-        return sum([s.get_beats_per_minute() for s in self._songs]) / self.get_number_of_songs()
+        return sum([s.get_beats_per_minute() for s in self._maps]) / self.get_number_of_maps()
 
     def get_beats_per_minute_std(self):
-        return np.std([s.get_beats_per_minute() for s in self._songs])
+        return np.std([s.get_beats_per_minute() for s in self._maps])
 
     def get_beats_per_bar(self):
-        return sum([s.get_beats_per_bar() for s in self._songs]) / self.get_number_of_songs()
+        return sum([s.get_beats_per_bar() for s in self._maps]) / self.get_number_of_maps()
 
     def get_beats_per_bar_std(self):
-        return np.std([s.get_beats_per_bar() for s in self._songs])
+        return np.std([s.get_beats_per_bar() for s in self._maps])
 
     def get_note_jump_speed(self):
-        return sum([s.get_note_jump_speed() for s in self._songs]) / self.get_number_of_songs()
+        return sum([s.get_note_jump_speed() for s in self._maps]) / self.get_number_of_maps()
 
     def get_note_jump_speed_std(self):
-        return np.std([s.get_note_jump_speed() for s in self._songs])
+        return np.std([s.get_note_jump_speed() for s in self._maps])
 
     def get_shuffle(self):
-        return sum([s.get_shuffle() for s in self._songs]) / self.get_number_of_songs()
+        return sum([s.get_shuffle() for s in self._maps]) / self.get_number_of_maps()
 
     def get_shuffle_std(self):
-        return np.std([s.get_shuffle() for s in self._songs])
+        return np.std([s.get_shuffle() for s in self._maps])
 
     def get_shuffle_period(self):
-        return sum([s.get_shuffle_period() for s in self._songs]) / self.get_number_of_songs()
+        return sum([s.get_shuffle_period() for s in self._maps]) / self.get_number_of_maps()
 
     def get_shuffle_period_std(self):
-        return np.std([s.get_shuffle_period() for s in self._songs])
+        return np.std([s.get_shuffle_period() for s in self._maps])
 
     def get_average_duration_in_seconds_between_notes(self):
-        return sum([s.get_average_duration_in_seconds_between_notes() for s in self._songs]) / self.get_number_of_songs()
+        return sum([s.get_average_duration_in_seconds_between_notes() for s in self._maps]) / self.get_number_of_maps()
 
     def get_average_duration_in_seconds_between_notes_std(self):
-        return np.std([s.get_average_duration_in_seconds_between_notes() for s in self._songs])
+        return np.std([s.get_average_duration_in_seconds_between_notes() for s in self._maps])
 
     def get_left_right_lean_fraction(self):
-        return sum([s.get_left_right_lean_fraction() for s in self._songs]) / self.get_number_of_songs()
+        return sum([s.get_left_right_lean_fraction() for s in self._maps]) / self.get_number_of_maps()
 
     def get_left_right_lean_fraction_std(self):
-        return np.std([s.get_left_right_lean_fraction() for s in self._songs])
+        return np.std([s.get_left_right_lean_fraction() for s in self._maps])
 
     def get_duration(self):
-        return sum([s.get_duration() for s in self._songs]) / self.get_number_of_songs()
+        return sum([s.get_duration() for s in self._maps]) / self.get_number_of_maps()
 
     def get_duration_std(self):
-        return np.std([s.get_duration() for s in self._songs])
+        return np.std([s.get_duration() for s in self._maps])
 
-class Song:
-    def __init__(self, ident, name, difficulty, json_filepath, song_filepath):
+class Map:
+    def __init__(self, ident, name, difficulty, map_filepath, audio_filepath):
         self.ident = ident
         self.name = name
         self.difficulty = difficulty
-        with open(json_filepath) as f:
+        with open(map_filepath) as f:
             self._data = json.load(f)
-        self.audio_info = OggVorbis(song_filepath)
+        self.audio_info = OggVorbis(audio_filepath)
         self._events = self._data["_events"]
         self._notes = self._data["_notes"]
         self._notes_normal = self._get_notes(NoteType.NORMAL)
@@ -216,36 +216,37 @@ class Song:
         return sum(diffs) / len(diffs)
 
     def get_left_right_lean_fraction(self):
-        """ A positive number mean that the song has more right than left notes, a negative number means the opposite and zero means that there are an equal number of both. """
+        """ A positive number mean that the map has more right than left notes, a negative number means the opposite and zero means that there are an equal number of both. """
         n_left_notes = len(self.get_notes(NoteType.LEFT))
         n_right_notes = len(self.get_notes(NoteType.RIGHT))
         n_normal_notes = n_left_notes + n_right_notes
         return (n_right_notes - n_left_notes) / n_normal_notes
 
-def get_basic_data_as_text(song):
+def get_basic_data_as_text(_map):
     lines = []
 
-    lines.append("beatsPerMinute: {:.2f}".format(song.get_beats_per_minute()))
-    lines.append("beatsPerBar: {:.2f}".format(song.get_beats_per_bar()))
-    lines.append("noteJumpSpeed: {:.2f}".format(song.get_note_jump_speed()))
-    lines.append("shuffle: {:.2f}".format(song.get_shuffle()))
-    lines.append("shufflePeriod: {:.2f}".format(song.get_shuffle_period()))
+    lines.append("duration (s): {:.2f}".format(_map.get_duration()))
+    lines.append("beatsPerMinute: {:.2f}".format(_map.get_beats_per_minute()))
+    lines.append("beatsPerBar: {:.2f}".format(_map.get_beats_per_bar()))
+    lines.append("noteJumpSpeed: {:.2f}".format(_map.get_note_jump_speed()))
+    lines.append("shuffle: {:.2f}".format(_map.get_shuffle()))
+    lines.append("shufflePeriod: {:.2f}".format(_map.get_shuffle_period()))
 
-    n_left_notes = len(song.get_notes(NoteType.LEFT))
-    n_right_notes = len(song.get_notes(NoteType.RIGHT))
+    n_left_notes = len(_map.get_notes(NoteType.LEFT))
+    n_right_notes = len(_map.get_notes(NoteType.RIGHT))
 
     n_normal_notes = n_left_notes + n_right_notes
     lines.append("total normal notes: {}".format(n_normal_notes))
-    lines.append("total bombs: {}".format(len(song.get_notes(NoteType.BOMB))))
+    lines.append("total bombs: {}".format(len(_map.get_notes(NoteType.BOMB))))
 
     lines.append("notes count (left,right): ({}, {})".format(n_left_notes, n_right_notes))
 
     left_note_fraction = n_left_notes / n_normal_notes
     right_note_fraction = n_right_notes / n_normal_notes
 
-    lines.append("notes leaning (left-, right+): {:.2f}".format(song.get_left_right_lean_fraction()))
+    lines.append("notes leaning (left-, right+): {:.2f}".format(_map.get_left_right_lean_fraction()))
 
-    lines.append("average difference in seconds between notes: {:.2f}".format(song.get_average_duration_in_seconds_between_notes()))
+    lines.append("average duration (s) between notes: {:.2f}".format(_map.get_average_duration_in_seconds_between_notes()))
 
     return '\n'.join(lines)
 
@@ -435,48 +436,43 @@ def build_cut_directions_drawing(notes):
 
     plt.axis('off')
 
-def build_basic_text(text):
-    fig = plt.figure()
-    plt.axis('off')
-    plt.text(0.05,0.05,text, transform=fig.transFigure, size=14)
-
-def save_bar_charts_pdf(pdf_filepath, song_collections):
+def save_bar_charts_pdf(pdf_filepath, map_collections):
     with PdfPages(pdf_filepath) as pdf:
-        build_bar_chart(song_collections, 'Number of songs', lambda c : c.get_number_of_songs())
+        build_bar_chart(map_collections, 'Number of songs', lambda c : c.get_number_of_maps())
         pdf.savefig()
         plt.close()
-        build_bar_chart(song_collections, 'Duration (s)', lambda c : c.get_duration(), lambda c : c.get_duration_std())
+        build_bar_chart(map_collections, 'Duration (s)', lambda c : c.get_duration(), lambda c : c.get_duration_std())
         pdf.savefig()
         plt.close()
-        build_bar_chart(song_collections, 'Average Duration between Notes (s)', lambda c : c.get_average_duration_in_seconds_between_notes(), lambda c : c.get_average_duration_in_seconds_between_notes_std())
+        build_bar_chart(map_collections, 'Average Duration between Notes (s)', lambda c : c.get_average_duration_in_seconds_between_notes(), lambda c : c.get_average_duration_in_seconds_between_notes_std())
         pdf.savefig()
         plt.close()
-        build_bar_chart(song_collections, 'Left/Right(-/+) Lean', lambda c : c.get_left_right_lean_fraction(), lambda c : c.get_left_right_lean_fraction_std())
+        build_bar_chart(map_collections, 'Left/Right(-/+) Lean', lambda c : c.get_left_right_lean_fraction(), lambda c : c.get_left_right_lean_fraction_std())
         pdf.savefig()
         plt.close()
-        build_bar_chart(song_collections, 'Note Jump Speed', lambda c : c.get_note_jump_speed(), lambda c : c.get_note_jump_speed_std())
+        build_bar_chart(map_collections, 'Note Jump Speed', lambda c : c.get_note_jump_speed(), lambda c : c.get_note_jump_speed_std())
         pdf.savefig()
         plt.close()
-        build_bar_chart(song_collections, 'BMP', lambda c : c.get_beats_per_minute(), lambda c : c.get_beats_per_minute_std())
+        build_bar_chart(map_collections, 'BMP', lambda c : c.get_beats_per_minute(), lambda c : c.get_beats_per_minute_std())
         pdf.savefig()
         plt.close()
-        build_bar_chart(song_collections, 'BMB', lambda c : c.get_beats_per_bar(), lambda c : c.get_beats_per_bar_std())
+        build_bar_chart(map_collections, 'BMB', lambda c : c.get_beats_per_bar(), lambda c : c.get_beats_per_bar_std())
         pdf.savefig()
         plt.close()
-        # build_bar_chart(song_collections, 'Shuffle', lambda c : c.get_shuffle(), lambda c : c.get_shuffle_std())
+        # build_bar_chart(map_collections, 'Shuffle', lambda c : c.get_shuffle(), lambda c : c.get_shuffle_std())
         # pdf.savefig()
         # plt.close()
-        # build_bar_chart(song_collections, 'Shuffle period', lambda c : c.get_shuffle_period(), lambda c : c.get_shuffle_period_std())
+        # build_bar_chart(map_collections, 'Shuffle period', lambda c : c.get_shuffle_period(), lambda c : c.get_shuffle_period_std())
         # pdf.savefig()
         # plt.close()
 
-def build_bar_chart(song_collections, value_name, fn_val, fn_std=None, color='b'):
-    n_difficulties = len(song_collections)
+def build_bar_chart(map_collections, value_name, fn_val, fn_std=None, color='b'):
+    n_difficulties = len(map_collections)
 
-    values = tuple([fn_val(c) for c in song_collections])
+    values = tuple([fn_val(c) for c in map_collections])
     std_values = None
     if fn_std:
-        std_values = tuple([fn_std(c) for c in song_collections])
+        std_values = tuple([fn_std(c) for c in map_collections])
 
     fig, ax = plt.subplots()
 
@@ -512,26 +508,28 @@ def build_bar_chart(song_collections, value_name, fn_val, fn_std=None, color='b'
     ax.set_ylabel(value_name)
     ax.set_title("{} by Difficulty".format(value_name))
     ax.set_xticks(index + bar_width / 2)
-    ax.set_xticklabels(tuple([c.difficulty for c in song_collections]))
+    ax.set_xticklabels(tuple([c.difficulty for c in map_collections]))
 
     fig.tight_layout()
 
-def save_pdf(pdf_filepath, song):
+def save_pdf(pdf_filepath, _map):
     with PdfPages(pdf_filepath) as pdf:
-        build_basic_text(get_basic_data_as_text(song))
+        fig = plt.figure()
+        plt.axis('off')
+        plt.text(0.05,0.05, get_basic_data_as_text(_map), transform=fig.transFigure, size=14)
         pdf.savefig()
         plt.close()
-        all_normal_notes = song.get_notes(NoteType.NORMAL)
+        all_normal_notes = _map.get_notes(NoteType.NORMAL)
         build_note_heatmap(all_normal_notes)
         plt.text(0, 2.75, "Total normal notes: {}".format(len(all_normal_notes)))
         pdf.savefig()
         plt.close()
-        all_bomb_notes = song.get_notes(NoteType.BOMB)
+        all_bomb_notes = _map.get_notes(NoteType.BOMB)
         build_note_heatmap(all_bomb_notes, "Reds")
         plt.text(0, 2.75, "Total bombs: {}".format(len(all_bomb_notes)))
         pdf.savefig()
         plt.close()
-        all_notes = song.get_notes()
+        all_notes = _map.get_notes()
         build_histogram(all_notes)
         pdf.savefig()
         plt.close()
@@ -540,15 +538,11 @@ def save_pdf(pdf_filepath, song):
         plt.close()
 
 def main():
-    if len(sys.argv) < 2:
-        print("python3 banalyze.py JSON_FILEPATH")
-        sys.exit(1)
-
     parser = argparse.ArgumentParser(description='.')
-    parser.add_argument('--path', help="Custom songs folder path for analyzing many custom songs.")
-    parser.add_argument('--difficulty', type=str, choices=SONG_DIFFICULTIES, default=None, help='Difficulty of songs to analyze, if not set then analyze all difficulties')
-    parser.add_argument('--text_filter', default=None, help='text to use to filter songs')
-    parser.add_argument('--max_count', type=int, default=None, help="Numbers of songs to analyse, -1 then no maximum.")
+    parser.add_argument('--path', help="Custom songs folder path.")
+    parser.add_argument('--difficulty', type=str, choices=MAP_DIFFICULTIES, default=None, help='Difficulty of maps to analyze, if not set then analyze all difficulties')
+    parser.add_argument('--text_filter', default=None, help='text to use to filter maps.')
+    parser.add_argument('--max_count', type=int, default=None, help="Numbers of maps to analyse, -1 then no maximum.")
     parser.add_argument('--output_filepath', type=str, default="OUTPUT", help='Filename to output to when performing certain operations.')
     parser.add_argument('--operations', nargs='+', choices=OPERATIONS, default=[OPERATIONS[0]], help='')
 
@@ -557,26 +551,26 @@ def main():
     is_operation_handled = False
     if OPERATIONS[0] in args.operations:
         is_operation_handled = True
-        song_collection = SongCollection(args.path, difficulty=args.difficulty, text_filter=args.text_filter, max_count=args.max_count)
-        save_pdf("{}.pdf".format(args.output_filepath), song_collection)
-        song_descriptors = ["{} _ {} _ {}".format(s.ident, s.name, s.difficulty) for s in song_collection.get_songs()]
+        map_collection = MapCollection(args.path, difficulty=args.difficulty, text_filter=args.text_filter, max_count=args.max_count)
+        save_pdf("{}.pdf".format(args.output_filepath), map_collection)
+        map_descriptors = ["{} _ {} _ {}".format(s.ident, s.name, s.difficulty) for s in map_collection.get_maps()]
         with open("{}.txt".format(args.output_filepath), 'wt', encoding='utf-8') as f:
-            f.write('\n'.join(song_descriptors))
+            f.write('\n'.join(map_descriptors))
     if OPERATIONS[1] in args.operations:
         is_operation_handled = True
-        song_collection = SongCollection(args.path, difficulty=args.difficulty, text_filter=args.text_filter, max_count=args.max_count)
-        for s in song_collection.get_songs():
+        map_collection = MapCollection(args.path, difficulty=args.difficulty, text_filter=args.text_filter, max_count=args.max_count)
+        for s in map_collection.get_maps():
             save_pdf("{}_{}_{}_{}.pdf".format(args.output_filepath, s.ident, s.name, s.difficulty), s)
     if OPERATIONS[2] in args.operations:
         is_operation_handled = True
         collections = []
         lines = []
-        for d in SONG_DIFFICULTIES:
-            song_collection = SongCollection(args.path, difficulty=d, max_count=args.max_count, text_filter=args.text_filter)
-            lines.append("{} - {} songs".format(d, song_collection.get_number_of_songs()))
-            collections.append(song_collection)
-            song_descriptors = ["  {} _ {} _ {}".format(s.ident, s.name, s.difficulty) for s in song_collection.get_songs()]
-            lines.extend(song_descriptors)
+        for d in MAP_DIFFICULTIES:
+            map_collection = MapCollection(args.path, difficulty=d, max_count=args.max_count, text_filter=args.text_filter)
+            lines.append("{} - {} maps".format(d, map_collection.get_number_of_maps()))
+            collections.append(map_collection)
+            map_descriptors = ["  {} _ {} _ {}".format(s.ident, s.name, s.difficulty) for s in map_collection.get_maps()]
+            lines.extend(map_descriptors)
         with open("{}.txt".format(args.output_filepath), 'wt', encoding='utf-8') as f:
             f.write('\n'.join(lines))
         save_bar_charts_pdf("{}.pdf".format(args.output_filepath), collections)

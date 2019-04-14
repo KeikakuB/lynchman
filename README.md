@@ -4,7 +4,7 @@ The goal of the project is to develop code for computing data based on Beat Sabe
 The name of the repo is based on the character Lynchman from one of the best animated movies of all time, Redline. He has a minor role in the movie but as an intergalactic mercenary for hire he spends a portion of his screen time stretching his arms and legs in preparation for his work, as one usually or should do before playing Beat Saber.
 
 # JSON File Format for Beat Saber Maps
-Maps are stored in .json files with a pretty self-explanatory format for the most part.
+Maps are stored in .json files with a pretty self-explanatory format for the most part. The filename is the difficulty of the map. A song can have multiple maps and thus difficulties associated to it.
 
 ## Notes
 ### lineIndex (columns), lineLayer (rows)
