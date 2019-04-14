@@ -31,6 +31,8 @@ OPERATIONS=["multi", "single", "compare", "generate"]
 
 from enum import Enum
 
+Block = namedtuple('Block', ['type', 'coords', 'cut_direction'])
+
 class JsonNoteType(Enum):
     LEFT = 0
     RIGHT = 1
@@ -58,8 +60,7 @@ class NoteType(Enum):
 class Song:
     def __init__(self, audio_filepath):
         self._audio_filepath = audio_filepath
-        # Load the audio as a waveform `y`
-        #  Store the sampling rate as `sr`
+        # Load the audio as a waveform `y` and the sampling rate as `sr`
         self._y, self._sr = librosa.load(audio_filepath)
 
         # Run the default beat tracker
@@ -77,11 +78,12 @@ class Song:
         return self._beats_per_minute
 
     def _generate_map(self, output_directory, difficulty_name, map_generator):
-        in_notes = []
-        in_obstacles = []
-        in_events = []
+        map_generator.generate()
 
-        map_generator.generate(in_notes, in_obstacles, in_events)
+        in_events = map_generator.get_events()
+        in_notes = map_generator.get_notes()
+        in_obstacles = map_generator.get_obstacles()
+
 
         data = {}
         data["_version"] = "1.5.0"
@@ -130,32 +132,56 @@ class Song:
         with open(os.path.join(output_directory, "info.json"), 'w') as outfile:
             json.dump(info_data, outfile)
 
-class MapGeneratorBeatStrategy:
+class MapGeneratorStrategy:
     def __init__(self, song):
         self._song = song
+        self._notes = []
+        self._obstacles = []
+        self._events = []
 
-    def generate(self, out_notes, out_obstacles, out_events):
+
+    def generate(self):
+        self._notes = []
+        self._obstacles = []
+        self._events = []
+        self._generate()
+
+    def get_notes(self):
+        return self._notes
+
+    def get_obstacles(self):
+        return self._obstacles
+
+    def get_events(self):
+        return self._events
+
+    def _add_note(self, time, block):
+        self._notes.append({
+            "_time": float("{:.16f}".format(time)),
+            "_lineIndex": block.coords[0],
+            "_lineLayer": block.coords[1],
+            "_type": block.type,
+            "_cutDirection": block.cut_direction
+        }
+        )
+    # def _add_event()
+    # def _add_obstacle()
+
+class MapGeneratorBeatStrategy(MapGeneratorStrategy):
+    def __init__(self, song):
+        MapGeneratorStrategy.__init__(self, song)
+
+    def _generate(self):
         beat_times = self._song.get_beat_times()
         for i in range(0, len(beat_times), 2):
             b = beat_times[i]
-            note_type = JsonNoteType.RIGHT
-            line_index = 2
-            line_layer = 0
-            cut_direction = N_CUT_DIRECTIONS - 1
-            out_notes.append({
-                "_time": float("{:.16f}".format(b)),
-                "_lineIndex": line_index,
-                "_lineLayer": line_layer,
-                "_type": note_type.value,
-                "_cutDirection": cut_direction
-            }
-            )
+            self._add_note(float("{:.16f}".format(b)), Block(JsonNoteType.RIGHT.value, (2, 0) , N_CUT_DIRECTIONS - 1))
 
-class MapGeneratorRandomStrategy:
+class MapGeneratorRandomStrategy(MapGeneratorStrategy):
     def __init__(self, song):
-        self._song = song
+        MapGeneratorStrategy.__init__(self, song)
 
-    def generate(self, out_notes, out_obstacles, out_events):
+    def generate(self):
         beat_times = self._song.get_beat_times()
         for i in range(0, len(beat_times), 2):
             b = beat_times[i]
@@ -166,21 +192,14 @@ class MapGeneratorRandomStrategy:
             line_index = random.randrange(N_LINE_INDEX)
             line_layer = random.randrange(N_LINE_LAYER)
             cut_direction = random.randrange(N_CUT_DIRECTIONS)
-            out_notes.append({
-                "_time": float("{:.16f}".format(b)),
-                "_lineIndex": line_index,
-                "_lineLayer": line_layer,
-                "_type": note_type.value,
-                "_cutDirection": cut_direction
-            }
-            )
+            self._add_note(float("{:.16f}".format(b)), Block(note_type.value, (line_index, line_layer), cut_direction))
 
-class MapGeneratorWeightedRandomStrategy:
+class MapGeneratorWeightedRandomStrategy(MapGeneratorStrategy):
     def __init__(self, song, map_collection):
-        self._song = song
+        MapGeneratorStrategy.__init__(self, song)
         self._map_collection = map_collection
 
-    def generate(self, out_notes, out_obstacles, out_events):
+    def generate(self):
         blocks = []
         for hand in range(N_HANDS):
             for index in range(N_LINE_INDEX):
@@ -260,14 +279,8 @@ class MapGeneratorWeightedRandomStrategy:
             note_type = JsonNoteType.RIGHT
             if hand == JsonNoteType.LEFT.value:
                 note_type = JsonNoteType.LEFT
-            out_notes.append({
-                "_time": float("{:.16f}".format(b)),
-                "_lineIndex": line_index,
-                "_lineLayer": line_layer,
-                "_type": note_type.value,
-                "_cutDirection": get_weighted_random_cut_direction(hand, line_index, line_layer)
-            }
-            )
+            cut_direction = get_weighted_random_cut_direction(hand, line_index, line_layer)
+            self._add_note(float("{:.16f}".format(b)), Block(note_type.value, (line_index, line_layer), cut_direction))
 
 class MapCollection:
     def __init__(self, root_directory, difficulty=None, text_filter=None, max_count=None):
