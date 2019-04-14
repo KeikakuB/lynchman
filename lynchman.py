@@ -13,8 +13,11 @@ import json
 import sys
 import collections
 
+from mutagen.oggvorbis import OggVorbis
+
 SONG_DIFFICULTIES=["Easy", "Normal", "Hard", "Expert", "ExpertPlus"]
 SONG_EXTENSION=".json"
+SONGFILE_EXTENSION=".ogg"
 
 OPERATIONS=["multi", "single", "compare"]
 
@@ -38,6 +41,8 @@ class SongCollection:
             if self.max_count and len(songs) >= max_count:
                 break
             root = os.path.join(root_directory, ident_dir)
+            tmp_songs = []
+            song_file = None
             song_ident = os.path.basename(ident_dir)
             if '-' not in song_ident:
                continue
@@ -52,13 +57,17 @@ class SongCollection:
                             is_song = False
                             filepath = os.path.join(root, item)
                             (name, ext) = os.path.splitext(item)
+                            if os.path.isfile(filepath) and ext == SONGFILE_EXTENSION:
+                                song_file = filepath
                             if os.path.isfile(filepath) and ext == SONG_EXTENSION:
                                 if self.difficulty:
                                     is_song = name == self.difficulty
                                 else:
                                     is_song = name in SONG_DIFFICULTIES
                             if is_song:
-                                songs.append(Song(song_ident, song_name, name, filepath))
+                                tmp_songs.append((song_ident, song_name, name, filepath))
+            for s in tmp_songs:
+                songs.append(Song(s[0], s[1], s[2], s[3], song_file))
         self._songs = songs
         self._number_of_songs = len(self._songs)
 
@@ -115,13 +124,20 @@ class SongCollection:
     def get_left_right_lean_fraction_std(self):
         return np.std([s.get_left_right_lean_fraction() for s in self._songs])
 
+    def get_duration(self):
+        return sum([s.get_duration() for s in self._songs]) / self.get_number_of_songs()
+
+    def get_duration_std(self):
+        return np.std([s.get_duration() for s in self._songs])
+
 class Song:
-    def __init__(self, ident, name, difficulty, json_filepath):
+    def __init__(self, ident, name, difficulty, json_filepath, song_filepath):
         self.ident = ident
         self.name = name
         self.difficulty = difficulty
         with open(json_filepath) as f:
             self._data = json.load(f)
+        self.audio_info = OggVorbis(song_filepath)
         self._events = self._data["_events"]
         self._notes = self._data["_notes"]
         self._notes_normal = self._get_notes(NoteType.NORMAL)
@@ -164,6 +180,9 @@ class Song:
 
     def get_version(self):
         return self._data["_version"]
+
+    def get_duration(self):
+        return self.audio_info.info.length
 
     def get_beats_per_minute(self):
         return self._data["_beatsPerMinute"]
@@ -424,6 +443,9 @@ def build_basic_text(text):
 def save_bar_charts_pdf(pdf_filepath, song_collections):
     with PdfPages(pdf_filepath) as pdf:
         build_bar_chart(song_collections, 'Number of songs', lambda c : c.get_number_of_songs())
+        pdf.savefig()
+        plt.close()
+        build_bar_chart(song_collections, 'Duration (s)', lambda c : c.get_duration(), lambda c : c.get_duration_std())
         pdf.savefig()
         plt.close()
         build_bar_chart(song_collections, 'Average Duration between Notes (s)', lambda c : c.get_average_duration_in_seconds_between_notes(), lambda c : c.get_average_duration_in_seconds_between_notes_std())
