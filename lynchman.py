@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import click
 import os
 import random
 import argparse
@@ -424,7 +425,7 @@ class MapGeneratorMarkovChainsStrategy(MapGeneratorStrategy):
         for i in range(0, len(beat_times), 2):
             b = beat_times[i]
             if not current_pattern:
-                print("Resetting pattern sequence after {}".format(b))
+                # print("Resetting pattern sequence after {}".format(b))
                 current_pattern = get_pattern()
                 # skip a beat to allow the player to reposition if needed
                 continue
@@ -945,50 +946,47 @@ def save_pdf(pdf_filepath, _map):
         pdf.savefig()
         plt.close()
 
-def main():
-    parser = argparse.ArgumentParser(description='.')
-    parser.add_argument('--path', help="Custom songs folder path.")
-    parser.add_argument('--audio_filepath', help="Audio file path to use for the 'generate' operation.")
-    parser.add_argument('--difficulty', type=str, choices=MAP_DIFFICULTIES, default=None, help='Difficulty of maps to analyze, if not set then analyze all difficulties')
-    parser.add_argument('--text_filter', default=None, help='Text to use to filter maps.')
-    parser.add_argument('--max_count', type=int, default=None, help="Numbers of maps to analyse, -1 then no maximum.")
-    parser.add_argument('--output_filepath', type=str, default="OUTPUT", help='Filename to output to when performing certain operations.')
-    parser.add_argument('--operations', nargs='+', choices=OPERATIONS, default=[OPERATIONS[0]], help='One or more operations to perform using the given songs/maps.')
-
-    args = parser.parse_args()
-
+@click.command()
+@click.option('--path', help="Custom songs folder path.")
+@click.option('--audio_filepath', help="Audio file path to use for the 'generate' operation.")
+@click.option('--difficulty', type=click.Choice(MAP_DIFFICULTIES), default=None, help='Difficulty of maps to analyze, if not set then analyze all difficulties')
+@click.option('--text_filter', default=None, help='Text to use to filter maps.')
+@click.option('--max_count', type=int, default=None, help="Numbers of maps to analyse, -1 then no maximum.")
+@click.option('--output_filepath', type=str, default="OUTPUT", help='Filename to output to when performing certain operations.')
+@click.option('--operations', type=click.Choice(OPERATIONS), default=[OPERATIONS[0]], multiple=True, help='One or more operations to perform using the given songs/maps.')
+def cli(path, audio_filepath, difficulty, text_filter, max_count, output_filepath, operations):
     is_operation_handled = False
-    if OPERATIONS[0] in args.operations:
+    if OPERATIONS[0] in operations:
         is_operation_handled = True
-        map_collection = MapCollection(args.path, difficulty=args.difficulty, text_filter=args.text_filter, max_count=args.max_count)
-        save_pdf("{}.pdf".format(args.output_filepath), map_collection)
+        map_collection = MapCollection(path, difficulty=difficulty, text_filter=text_filter, max_count=max_count)
+        save_pdf("{}.pdf".format(output_filepath), map_collection)
         map_descriptors = ["{} _ {} _ {}".format(s.ident, s.name, s.difficulty) for s in map_collection.get_maps()]
-        with open("{}.txt".format(args.output_filepath), 'wt', encoding='utf-8') as f:
+        with open("{}.txt".format(output_filepath), 'wt', encoding='utf-8') as f:
             f.write('\n'.join(map_descriptors))
-    if OPERATIONS[1] in args.operations:
+    if OPERATIONS[1] in operations:
         is_operation_handled = True
-        map_collection = MapCollection(args.path, difficulty=args.difficulty, text_filter=args.text_filter, max_count=args.max_count)
+        map_collection = MapCollection(path, difficulty=difficulty, text_filter=text_filter, max_count=max_count)
         for s in map_collection.get_maps():
-            save_pdf("{}_{}_{}_{}.pdf".format(args.output_filepath, s.ident, s.name, s.difficulty), s)
-    if OPERATIONS[2] in args.operations:
+            save_pdf("{}_{}_{}_{}.pdf".format(output_filepath, s.ident, s.name, s.difficulty), s)
+    if OPERATIONS[2] in operations:
         is_operation_handled = True
         map_collections = []
         lines = []
         for d in MAP_DIFFICULTIES:
-            map_collection = MapCollection(args.path, difficulty=d, max_count=args.max_count, text_filter=args.text_filter)
+            map_collection = MapCollection(path, difficulty=d, max_count=max_count, text_filter=text_filter)
             lines.append("{} - {} maps".format(d, map_collection.get_number_of_maps()))
             map_collections.append(map_collection)
             map_descriptors = ["  {} _ {} _ {}".format(s.ident, s.name, s.difficulty) for s in map_collection.get_maps()]
             lines.extend(map_descriptors)
-        with open("{}.txt".format(args.output_filepath), 'wt', encoding='utf-8') as f:
+        with open("{}.txt".format(output_filepath), 'wt', encoding='utf-8') as f:
             f.write('\n'.join(lines))
-        save_bar_charts_pdf("{}.pdf".format(args.output_filepath), map_collections)
-    if not is_operation_handled and OPERATIONS[3] in args.operations:
+        save_bar_charts_pdf("{}.pdf".format(output_filepath), map_collections)
+    if not is_operation_handled and OPERATIONS[3] in operations:
         is_operation_handled = True
 
-        map_collection = MapCollection(args.path, difficulty=args.difficulty, text_filter=args.text_filter, max_count=args.max_count)
+        map_collection = MapCollection(path, difficulty=difficulty, text_filter=text_filter, max_count=max_count)
 
-        song = Song(args.audio_filepath)
+        song = Song(audio_filepath)
 
         map_generators = [
             # ("Beat", 1, MapGeneratorBeatStrategy(song)),
@@ -996,11 +994,8 @@ def main():
             # ("Weighted Random", 4, MapGeneratorWeightedRandomStrategy(song, map_collection)),
             ("Markov Chains", 5, MapGeneratorMarkovChainsStrategy(song, map_collection))
         ]
-        song.generate_maps(args.output_filepath, map_generators)
+        song.generate_maps(output_filepath, map_generators)
 
     if not is_operation_handled:
         print("Unhandled operation type, error in code")
         sys.exit(1)
-
-if __name__ == "__main__":
-    main()

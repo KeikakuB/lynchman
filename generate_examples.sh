@@ -5,6 +5,6 @@ OUTPUT_PATH="~/projects/lynchman/examples/"
 rm ~/projects/lynchman/examples/*.pdf
 rm ~/projects/lynchman/examples/*.txt
 
-${SCRIPT} --path "$CUSTOM_SONGS_PATH" --output_filepath "examples/Koto" --text_filter Koto --difficulty Expert --op single
-${SCRIPT} --path "$CUSTOM_SONGS_PATH" --output_filepath "examples/AggregatedSongsData" --op multi
-${SCRIPT} --path "$CUSTOM_SONGS_PATH" --output_filepath "examples/DifficultiesCompared" --op compare
+${SCRIPT} --path "$CUSTOM_SONGS_PATH" --output_filepath "examples/Koto" --text_filter Koto --difficulty Expert --operations single
+${SCRIPT} --path "$CUSTOM_SONGS_PATH" --output_filepath "examples/AggregatedSongsData" --operations multi
+${SCRIPT} --path "$CUSTOM_SONGS_PATH" --output_filepath "examples/DifficultiesCompared" --operations compare
