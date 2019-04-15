@@ -61,6 +61,7 @@ def cli(path, audio_filepath, difficulty, text_filter, max_count, output_filepat
             ("Beat", 1, MapGeneratorBeatStrategy(song)),
             ("Random", 3, MapGeneratorRandomStrategy(song)),
             ("Weighted Random", 4, MapGeneratorWeightedRandomStrategy(song, map_collection)),
+            ("Markov Chains DEBUG", 5, MapGeneratorMarkovChainsStrategy(song, map_collection, True)),
             ("Markov Chains", 5, MapGeneratorMarkovChainsStrategy(song, map_collection))
         ]
         song.generate_maps(output_filepath, map_generators)

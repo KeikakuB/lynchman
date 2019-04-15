@@ -8,4 +8,4 @@ CUSTOM_SONGS_PATH="/mnt/c/Program Files (x86)/Steam/steamapps/common/Beat Saber/
 # lynchman --path "$CUSTOM_SONGS_PATH" --output_filepath "out/All_All" --operations multi
 # lynchman --path "$CUSTOM_SONGS_PATH" --output_filepath "out/KOTO" --text_filter Koto --difficulty Expert  --operations single
 # lynchman --path "$CUSTOM_SONGS_PATH" --output_filepath "out/Compare" --operations compare
-lynchman --path "$CUSTOM_SONGS_PATH" --audio_filepath "maps/heart_on_wave.ogg" --output_filepath "/mnt/c/Program Files (x86)/Steam/steamapps/common/Beat Saber/CustomSongs/very_spicey_meme/" --operations generate
+lynchman --path "$CUSTOM_SONGS_PATH" --audio_filepath "maps/heart_on_wave.ogg" --output_filepath "/mnt/c/Program Files (x86)/Steam/steamapps/common/Beat Saber/WIP Songs/very_spicey_meme/" --operations generate
