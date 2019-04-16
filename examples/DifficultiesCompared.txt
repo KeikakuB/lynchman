@@ -1,4 +1,4 @@
-Easy - 55 songs
+Easy - 55 maps
   11040-11684 _ Ghosts n Stuff (feat. Rob Swire) _ Easy
   11050-11697 _ Huey Lewis - The power of love _ Easy
   11123-11794 _ Animals v2 _ Easy
@@ -54,7 +54,7 @@ Easy - 55 songs
   9074-9356 _ Zero _ Easy
   9639-10572 _ tofubeats - CANDYYYLAND (Pa's Lam System Remix) V2 by Saut _ Easy
   9690-10090 _ Hideki Naganuma - AIN'T NOTHIN' LIKE A FUNKY BEAT _ Easy
-Normal - 115 songs
+Normal - 115 maps
   10271-10785 _ RBB - Red Velvet _ Normal
   1092-745 _ Blow Me Away _ Normal
   11040-11684 _ Ghosts n Stuff (feat. Rob Swire) _ Normal
@@ -170,7 +170,7 @@ Normal - 115 songs
   9074-9356 _ Zero _ Normal
   9639-10572 _ tofubeats - CANDYYYLAND (Pa's Lam System Remix) V2 by Saut _ Normal
   9690-10090 _ Hideki Naganuma - AIN'T NOTHIN' LIKE A FUNKY BEAT _ Normal
-Hard - 174 songs
+Hard - 174 maps
   10271-10785 _ RBB - Red Velvet _ Hard
   1092-745 _ Blow Me Away _ Hard
   11040-11684 _ Ghosts n Stuff (feat. Rob Swire) _ Hard
@@ -345,7 +345,7 @@ Hard - 174 songs
   9219-9520 _ Your Love _ Hard
   9639-10572 _ tofubeats - CANDYYYLAND (Pa's Lam System Remix) V2 by Saut _ Hard
   9690-10090 _ Hideki Naganuma - AIN'T NOTHIN' LIKE A FUNKY BEAT _ Hard
-Expert - 217 songs
+Expert - 217 maps
   10271-10785 _ RBB - Red Velvet _ Expert
   1046-707 _ Koto _ Expert
   1078-733 _ Get Low _ Expert
@@ -563,7 +563,7 @@ Expert - 217 songs
   9219-9520 _ Your Love _ Expert
   9639-10572 _ tofubeats - CANDYYYLAND (Pa's Lam System Remix) V2 by Saut _ Expert
   9690-10090 _ Hideki Naganuma - AIN'T NOTHIN' LIKE A FUNKY BEAT _ Expert
-ExpertPlus - 78 songs
+ExpertPlus - 78 maps
   10271-10785 _ RBB - Red Velvet _ ExpertPlus
   1107-6105 _ What You Know (BPM Fix) _ ExpertPlus
   11265-11950 _ Cowboy Bebop RUSH _ ExpertPlus
