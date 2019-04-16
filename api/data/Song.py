@@ -1,6 +1,8 @@
 import os
 import json
 
+os.environ['LIBROSA_CACHE_DIR'] = '/tmp/librosa_cache'
+os.environ['LIBROSA_CACHE_LEVEL'] = '30'
 import librosa
 
 import api.data.Constants
