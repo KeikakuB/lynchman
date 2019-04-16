@@ -10,6 +10,7 @@ import api.data.Constants
 class Song:
     def __init__(self, audio_filepath):
         self._audio_filepath = audio_filepath
+
         # Load the audio as a waveform `y` and the sampling rate as `sr`
         self._y, self._sr = librosa.load(audio_filepath)
 
@@ -33,7 +34,6 @@ class Song:
         in_events = map_generator.get_events()
         in_notes = map_generator.get_notes()
         in_obstacles = map_generator.get_obstacles()
-
 
         data = {}
         data["_version"] = "1.5.0"
@@ -65,7 +65,8 @@ class Song:
         for (name, rank, generator) in map_generators:
             difficulty_levels.append({
                 "audioPath": audio_filename,
-                "difficulty": name,
+                "difficulty": "Expert",
+                "difficultyLabel": name,
                 "difficultyRank": rank,
                 "jsonPath": "{}{}".format(name, api.data.Constants.MAP_EXTENSION),
                 "offset": 0,
